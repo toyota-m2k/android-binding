@@ -5,12 +5,13 @@ package io.github.toyota32k.binder
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
+import io.github.toyota32k.utils.Disposer
 import io.github.toyota32k.utils.IDisposable
 import io.github.toyota32k.utils.disposableObserve
 import kotlinx.coroutines.flow.Flow
 
 open class HeadlessBinding<T>(val data: LiveData<T>, callback:((T?)->Unit)?=null) : IBinding {
-    private var observed: IDisposable? = null
+    private val observed = Disposer()
     protected var onValueChanged:((T?)->Unit)? = callback
 
     fun setCallback(callback: ((T?) -> Unit)?) {
@@ -19,12 +20,11 @@ open class HeadlessBinding<T>(val data: LiveData<T>, callback:((T?)->Unit)?=null
 
     override val mode: BindingMode = BindingMode.OneWay
     override fun dispose() {
-        observed?.dispose()
-        observed = null
+        observed.dispose()
     }
 
     fun connect(owner:LifecycleOwner) {
-        observed = data.disposableObserve(owner) { onValueChanged?.invoke(it) }
+        observed + data.disposableObserve(owner) { onValueChanged?.invoke(it) }
     }
 
     companion object {
