@@ -18,7 +18,8 @@ abstract class BoolBinding(
     mode: BindingMode,
     boolConvert: BoolConvert
 ) : BaseBinding<Boolean>(mode) {
-    override val data:LiveData<Boolean> = if(boolConvert== BoolConvert.Straight) rawData else ConvertLiveData<Boolean,Boolean>(rawData as MutableLiveData<Boolean>, { it!=true }, {it!=true})
+    @Suppress("UNCHECKED_CAST")
+    override val data:LiveData<Boolean> = if(boolConvert== BoolConvert.Straight) rawData else ConvertLiveData<Boolean,Boolean>(rawData as MutableLiveData<Boolean?>, { it!=true }, {it!=true})
 }
 
 open class GenericBoolBinding(
