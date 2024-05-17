@@ -39,7 +39,7 @@ class BinderTest {
         val activity = createActivity()
         val textView = TextView(activity)
         val textData = MutableLiveData<String>()
-        val boolData = MutableLiveData<Boolean>(false)
+        val boolData = MutableLiveData(false)
 
         val binder = Binder().register(
             TextBinding.create(activity, textView, textData),
@@ -71,7 +71,7 @@ class BinderTest {
         val activity = createActivity()
         val textView = TextView(activity)
         val textData = MutableLiveData<String>()
-        val boolData = MutableLiveData<Boolean>(false)
+        val boolData = MutableLiveData(false)
 
         val binder = Binder()
             .textBinding(activity, textView, textData)
@@ -103,7 +103,7 @@ class BinderTest {
         val activity = createActivity()
         val textView = TextView(activity)
         val textData = MutableLiveData<String>()
-        val boolData = MutableLiveData<Boolean>(false)
+        val boolData = MutableLiveData(false)
 
         val binder = Binder()
             .owner(activity)
@@ -136,19 +136,19 @@ class BinderTest {
     fun genericBoolBindingTest() {
         var activity = createActivity()
         val view:View = ToggleButton(activity)
-        val data = MutableLiveData<Boolean>(false)
+        val data = MutableLiveData(false)
         val flow = MutableStateFlow(false)
         val binder = Binder().owner(activity)
 
-        var v1: Boolean = false
-        var v2: Boolean = false
-        var v3: Boolean = false
-        var v4: Boolean = false
+        var v1 = false
+        var v2 = false
+        var v3 = false
+        var v4 = false
         binder
-            .genericBoolBinding(activity, view, data, BoolConvert.Straight) { v,b -> v1=b }
-            .genericBoolBinding(activity, view, flow, BoolConvert.Straight) { v,b -> v2=b }
-            .genericBoolBinding(view, data, BoolConvert.Straight) {v,b -> v3=b }
-            .genericBoolBinding(view, flow, BoolConvert.Straight) {v,b -> v4=b }
+            .genericBoolBinding(activity, view, data, BoolConvert.Straight) { _, b -> v1=b }
+            .genericBoolBinding(activity, view, flow, BoolConvert.Straight) { _, b -> v2=b }
+            .genericBoolBinding(view, data, BoolConvert.Straight) { _, b -> v3=b }
+            .genericBoolBinding(view, flow, BoolConvert.Straight) { _, b -> v4=b }
 
         assertEquals(4, binder.count)
         assertFalse(v1)
@@ -212,7 +212,7 @@ class BinderTest {
     fun checkBindingTest() {
         val activity = createActivity()
         val view = ToggleButton(activity)
-        val data = MutableLiveData<Boolean>(false)
+        val data = MutableLiveData(false)
         val flow = MutableStateFlow(false)
 
         val binder = Binder().owner(activity)
@@ -243,7 +243,7 @@ class BinderTest {
         val activity = createActivity()
         val view1 = TextView(activity)
         val view2 = TextView(activity)
-        val data = MutableLiveData<Boolean>(false)
+        val data = MutableLiveData(false)
         val flow = MutableStateFlow(false)
 
         val binder = Binder().owner(activity)
@@ -299,7 +299,7 @@ class BinderTest {
         val activity = createActivity()
         val view1 = TextView(activity)
         val view2 = TextView(activity)
-        val data = MutableLiveData<Boolean>(false)
+        val data = MutableLiveData(false)
         val flow = MutableStateFlow(false)
 
         val binder = Binder().owner(activity)
@@ -357,7 +357,7 @@ class BinderTest {
         val view2 = TextView(activity)
         val view3 = TextView(activity)
         val view4 = TextView(activity)
-        val data = MutableLiveData<Boolean>(false)
+        val data = MutableLiveData(false)
 
         val binder = Binder().owner(activity)
 
