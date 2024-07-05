@@ -1,11 +1,13 @@
 package io.github.toyota32k.binder
 
+import android.os.Build
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import org.junit.Assert.*
 import org.junit.Assert.assertNotEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,7 +36,12 @@ class ProgressBarBindingTest {
         val activity = createActivity()
         activity.setTheme(android.R.style.Theme)
 
-        val view = ProgressBar(activity, null, android.R.style.Widget_DeviceDefault_ProgressBar_Horizontal).apply { min = 0; max = 100; isIndeterminate=false }
+        val view = ProgressBar(activity, null, android.R.style.Widget_DeviceDefault_ProgressBar_Horizontal).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                min = 0
+            }
+            max = 100; isIndeterminate=false
+        }
         val data = MutableLiveData<Int>(40)
         view.progress=50
 
@@ -58,6 +65,9 @@ class ProgressBarBindingTest {
     }
     @Test
     fun minMaxTest() {
+        // APIレベルが26以上であることを前提とします
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
         val activity = createActivity()
         activity.setTheme(android.R.style.Theme)
 
@@ -83,6 +93,9 @@ class ProgressBarBindingTest {
 
     @Test
     fun binderTest() {
+        // APIレベルが26以上であることを前提とします
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
         val activity = createActivity()
         activity.setTheme(android.R.style.Theme)
 

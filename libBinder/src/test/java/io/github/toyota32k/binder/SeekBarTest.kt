@@ -1,10 +1,12 @@
 package io.github.toyota32k.binder
 
+import android.os.Build
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import org.junit.Assert.*
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,7 +33,12 @@ class SeekBarTest {
     @Test
     fun oneWayTest() {
         val activity = createActivity()
-        val view = SeekBar(activity).apply { min = 0; max = 100 }
+        val view = SeekBar(activity).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                min = 0
+            }
+            max = 100
+        }
         val data = MutableLiveData<Int>(40)
         view.progress=50
 
@@ -52,7 +59,12 @@ class SeekBarTest {
     @Test
     fun oneWayToSourceTest() {
         val activity = createActivity()
-        val view = SeekBar(activity).apply { min=0; max=100}
+        val view = SeekBar(activity).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                min = 0
+            }
+            max=100
+        }
         val data = MutableLiveData<Int>(40)
         view.progress=50
 
@@ -73,7 +85,12 @@ class SeekBarTest {
     @Test
     fun twoWayTest() {
         val activity = createActivity()
-        val view = SeekBar(activity).apply { min=0; max=100}
+        val view = SeekBar(activity).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                min = 0
+            }
+            max=100
+        }
         val data = MutableLiveData<Int>(40)
         view.progress=50
 
@@ -92,6 +109,9 @@ class SeekBarTest {
 
     @Test
     fun minMaxOneWayTest() {
+        // APIレベルが26以上であることを前提とします
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
         val activity = createActivity()
         val view = SeekBar(activity)
         val lmin = MutableLiveData<Int>(0)
@@ -124,6 +144,9 @@ class SeekBarTest {
 
     @Test
     fun minMaxOneWayToSourceTest() {
+        // APIレベルが26以上であることを前提とします
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
         val activity = createActivity()
         val view = SeekBar(activity).apply { min=0; max=100}
         val lmin = MutableLiveData<Int>(0)
@@ -156,6 +179,9 @@ class SeekBarTest {
 
     @Test
     fun minMaxTwoWayTest() {
+        // APIレベルが26以上であることを前提とします
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
         val activity = createActivity()
         val view = SeekBar(activity).apply { min=0; max=100}
         val lmin = MutableLiveData<Int>(0)
@@ -188,6 +214,9 @@ class SeekBarTest {
 
     @Test
     fun binderTest() {
+        // APIレベルが26以上であることを前提とします
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
         val activity = createActivity()
         val view = SeekBar(activity).apply { min=0; max=100}
         val lmin = MutableLiveData<Int>(0)
