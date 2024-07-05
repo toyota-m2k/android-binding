@@ -11,9 +11,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         mavenLocal()
-        maven { url "https://jitpack.io" }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 rootProject.name = "AndroidBinder"
-include ':app'
-include ':libBinder'
+include(":app")
+include(":libBinder")
