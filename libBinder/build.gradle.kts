@@ -46,7 +46,7 @@ dependencies {
     implementation(libs.constraintLayout)
     implementation(libs.recyclerview)
 
-    implementation(libs.lifecycleExtensionsV220)
+    implementation(libs.lifecycleExtensions)
 
     implementation(libs.lifecycleRuntimeKtx)
     implementation(libs.lifecycleLivedataKtx)

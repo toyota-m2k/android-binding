@@ -4,7 +4,6 @@ core = "1.6.1"
 coreKtx = "1.13.1"
 appcompat = "1.7.0"
 coreTesting = "2.2.0"
-lifecycleExtensions = "2.2.0"
 lifecycleRuntimeKtx = "2.8.3"
 lifecycleLivedataKtx = "2.8.3"
 lifecycleViewmodelKtx = "2.8.3"
@@ -28,7 +27,6 @@ core-testing = { module = "androidx.arch.core:core-testing", version.ref = "core
 coreKtx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
-lifecycleExtensionsV220 = { module = "androidx.lifecycle:lifecycle-extensions", version.ref = "lifecycleExtensions" }
 lifecycleService = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycleService" }
 lifecycleViewmodelKtx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 lifecycleLivedataKtx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
