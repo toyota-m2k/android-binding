@@ -1,5 +1,10 @@
 [versions]
-androidUtilities = "2.0.2"
+#plugins
+kotlin = "1.9.23"
+agp = "8.5.0"
+
+#libraries
+androidUtilities = "2.0.7"
 core = "1.6.1"
 coreKtx = "1.13.1"
 appcompat = "1.7.0"
@@ -43,3 +48,8 @@ mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockito
 mockito-kotlin = { module = "com.nhaarman.mockitokotlin2:mockito-kotlin", version.ref = "mockitoKotlin" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+
+[plugins]
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
