@@ -198,6 +198,8 @@ fun Binder.bindCommand(owner: LifecycleOwner, cmd:IUnitCommand, callback:()->Uni
 /**
  * コマンドにビューをアタッチし、ハンドラ (callback) をバインドする
  */
+fun Binder.bindCommand(owner: LifecycleOwner, cmd:IUnitCommand, view:View, callback:()->Unit): Binder
+        = bindCommand(cmd,view).add(cmd.bind(owner,callback))
 fun Binder.bindCommand(owner: LifecycleOwner, cmd:IUnitCommand, vararg views:View, callback:()->Unit): Binder
         = bindCommand(cmd,*views).add(cmd.bind(owner,callback))
 
@@ -211,6 +213,8 @@ fun Binder.bindCommand(cmd:IUnitCommand, callback:()->Unit): Binder
  * コマンドにビューをアタッチし、ハンドラ (callback) をバインドする
  * ownerなし版
  */
+fun Binder.bindCommand(cmd:IUnitCommand, view:View, callback:()->Unit): Binder
+        = bindCommand(requireOwner, cmd, view, callback)
 fun Binder.bindCommand(cmd:IUnitCommand, vararg views:View, callback:()->Unit): Binder
         = bindCommand(requireOwner, cmd, views=views, callback)
 

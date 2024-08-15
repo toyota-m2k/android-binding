@@ -1,9 +1,10 @@
 [versions]
 #plugins
 kotlin = "1.9.23"
-agp = "8.5.0"
+agp = "8.5.1"
 
 #libraries
+activity = "1.9.0"
 androidUtilities = "2.0.7"
 core = "1.6.1"
 coreKtx = "1.13.1"
@@ -27,6 +28,7 @@ robolectric = "4.11.1"
 
 [libraries]
 android-utilities = { module = "com.github.toyota-m2k:android-utilities", version.ref = "androidUtilities" }
+androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
 core = { module = "androidx.test:core", version.ref = "core" }
 core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }
 coreKtx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
