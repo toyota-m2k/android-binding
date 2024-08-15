@@ -2,7 +2,7 @@ package io.github.toyota32k.binder
 
 import androidx.annotation.IdRes
 
-enum class TestEnum(val id:Int) {
+enum class TestEnum(@IdRes val id:Int) {
     E0(1000),
     E1(1001),
     E2(1002),
@@ -10,7 +10,7 @@ enum class TestEnum(val id:Int) {
 
     companion object {
         fun valueOf(@IdRes id: Int): TestEnum? {
-            return values().find { it.id == id }
+            return entries.find { it.id == id }
         }
     }
     object IDResolver:IIDValueResolver<TestEnum> {

@@ -419,23 +419,56 @@ visibilityBinding(), textBinding() などは、Binderクラスの拡張関数で
 ||||valueFrom|Float|OneWay|
 ||||valueTo|Float|OneWay|
 
-- progressBarBinding は、ViewModelのFlow<Int>型データを、ProgressBarの progress プロパティに単方向バインドします。必要に応じて、min/max プロパティに対する単方向バインドも設定できます。
-- seekBarBinding は、ViewModelのMutableStateFlow<Int>型データを、SeekBarの value プロパティと双方向バインドします。必要に応じて、min/max プロパティに対する単方向バインドも設定できます。
-- sliderBinding は、ViewModelのMutableStateFlow<Float>型データを、Material Component の Slider の value プロパティと双方向バインドします。必要に応じて、valueFrom/valueTo プロパティに対する単方向バインドも設定できます。
+- `progressBarBinding` は、ViewModelのFlow<Int>型データを、`ProgressBar` の `progress` プロパティに単方向バインドします。必要に応じて、min/max プロパティに対する単方向バインドも設定できます。
+- `seekBarBinding` は、ViewModelのMutableStateFlow<Int>型データを、`SeekBar`の `value` プロパティと双方向バインドします。必要に応じて、`min`/`max` プロパティに対する単方向バインドも設定できます。
+- `sliderBinding` は、ViewModelのMutableStateFlow<Float>型データを、Material Component の `Slider` の `value` プロパティと双方向バインドします。必要に応じて、valueFrom/valueTo プロパティに対する単方向バインドも設定できます。
 
-### ラジオボタン
+### ラジオボタンのバインディング
 
 
 | 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
 |---|---|---|---|---|
-|radioGroupBinding|RadioGroupBinding|RadioGroup|T:Any (using IIDValueResolver&lt;T>)|TwoWay|
-|materialRadioButtonGroupBinding|MaterialRadioButtonGroupBinding|MaterialButtonToggleGroup (isSingleSelection=true)|T:Any (using IIDValueResolver&lt;T>)|TwoWay|
+|radioGroupBinding|RadioGroupBinding|RadioGroup|T:Any (IIDValueResolver&lt;T>を使用)|TwoWay|
+|materialRadioButtonGroupBinding|MaterialRadioButtonGroupBinding|MaterialButtonToggleGroup (isSingleSelection=true, isSelectionRequired=true)|T:Any (IIDValueResolver&lt;T>を使用)|TwoWay|
+|materialRadioUnSelectableButtonGroupBinding|MaterialRadioButtonUnSelectableGroupBinding|MaterialButtonToggleGroup (isSingleSelection=true, isSelectionRequired=true)|T:Any (IIDValueResolver&lt;T>を使用)|TwoWay|
 
+- `radioGroupBinding`と`materialRadioButtonGroupBinding`は、それぞれ`RadioGroup` の `checkedRadioButtonId` `プロパティ、MaterialButtonToggleGroup` の `checkedButtonId` プロパティとViewModelが持つ任意のMutableStateFlow&ltT>（通常 T はenum 値）を双方向バインドします。
+- `materialRadioUnSelectableButtonGroupBinding`は、「選択なし」という状態を許容する以外は、materialRadioButtonGroupBinding と同じです。
+- ボタンのID(android:id) と &lt;T>型を相互変換するために、`IIDValueResolver` を実装する必要があります。
+```kotlin
+interface IIDValueResolver<T> {
+    fun id2value(@IdRes id:Int) : T?
+    fun value2id(v:T): Int
+}
+```
+例えば次のような enum class を定義して利用します。
+```kotlin
+enum class RGB(@IdRes val id:Int) {
+    RED(R.id.red_button),
+    GREEN(R.id.green_button),
+    BLUE(R.id.blue_button);
 
-ラジオボタンは、ラジオボタングループ（LinearLayout派生クラス）のサブビュー
+    companion object {
+        fun valueOf(@IdRes id: Int): RGB? {
+            return entries.find { it.id == id }
+        }
+    }
+    object IDResolver:IIDValueResolver<RGB> {
+        override fun id2value(id: Int): RGB? = valueOf(id)
+        override fun value2id(v: RGB): Int = v.id
+    }
+}
 
+...
+class ViewModel {
+    val rgb = MutableStateFlow<RGB?>(null)
+}
 
+...
+binder.materialRadioUnSelectableButtonGroupBinding(buttonToggleGroup, viewModel.rgb, RGB.IDResolver)
+```
 
+### 複数選択可能なトグルボタングループ（MaterialButtonToggleGroup）のバインディング
 
 
 | 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
@@ -443,4 +476,74 @@ visibilityBinding(), textBinding() などは、Binderクラスの拡張関数で
 |materialToggleButtonGroupBinding|MaterialToggleButtonGroupBinding|MaterialButtonToggleGroup|checkedButtonIds|List&lt;T:Any> (using IIDValueResolver&lt;t>)||TwoWay|
 |materialToggleButtonsBinding|MaterialToggleButtonsBinding|MaterialButtonToggleGroup|checkedButtonIds|Boolean(s)|TwoWay|
 
+- `materialToggleButtonGroupBinding` は、`MaterialButtonToggleGroup` の `checkedButtonIds` プロパティを `IIDValueResolver` によって変換された List&lt;T>を、  ViewModel の `MutableStateFlow<List<T>>` にバインドします。
+- `materialToggleButtonsBinding` は、個々のボタン（MaterialButtonToggleGroupの子要素）のチェック状態（MaterialButtonToggleGroupのcheckedButtonIdsから取得）を、ViewModel の MutableStateFlow<Boolean> を１つずつ双方向にバインドします。
 
+
+```kotlin
+class ViewModel {
+    val red = MutableStateFlow<Boolean>(false)
+    val green = MutableStateFlow<Boolean>(false)
+    val blue = MutableStateFlow<Boolean>(false)
+}
+
+binder.materialToggleButtonsBinding(group, BindingMode.TwoWay) {
+    bind(controls.redButton, viewModel.red)
+    bind(controls.greenButton, viewModel.green)
+    bind(controls.blueButton, viewModel.blue)
+}
+
+```
+
+### RecyclerView のバインディング
+
+| 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
+|---|---|---|---|---|
+|recyclerViewBinding|RecyclerViewBinding|RecyclerView|ObservableList|TwoWay|
+|recyclerViewGestureBinding|RecyclerViewBinding|RecyclerView|ObservableList|TwoWay|
+
+
+- `RecyclerView` と、その要素リストをバインドするため、要素の変更を監視可能な、MutableList派生クラス `ObservableList`を使用します。
+- recyclerViewBindingは、RecyclerView と ViewModel の ObservableList とを双方向にバインドします。D&Dによるリストの並べ替えもサポートしており、その有効・無効も MutableStateFlow<Boolean>型の変数にバインドして、動的に切り替えることも可能です。
+- recyclerViewGestureBindingは、リスト要素の右スワイプジェスチャーによる要素削除をサポートします。こちらもジェスチャーの有効・無効を MutableStateFlow<Boolean>型の変数にバインドして、動的に切り替えることも可能です。
+- 個々の要素と、それを表示するためのItem View は、引数 `bindView:(Binder, View, T)->Unit)` で接続しますが、その第一引数で RecyclerView の Item View のライフサイクルに合わせて動作するBinderインスタンスが渡されるので、 bindView内で、Item View に対するバインディングを定義できます。
+
+```kotlin
+class ViewModel {
+     val videoSources = ObservableList<MediaSource>()
+     val currentSource = MutableStateFlow<MediaSource?>(null)
+}
+
+...
+val binder = Binder()
+fun onCreate(savedInstanceState:Bundle?) {
+    binder
+    .owner(this)
+    .recyclerViewBinding(model.videoSources, R.layout.list_item_video) { itemBinder, view, item ->
+        itemBinder
+        // タイトル
+        .textBinding(view.findViewById(R.id_textview_title), ConstantLiveData(item.title))
+        // 再生中のアイテムのチェックを on
+        .checkBinding(view.findViewById(R.id_checkbox_current_item), viewModel.currentSource.map { it == item })
+        // アイテムタップで再生開始（playCommandにviewをバインド）
+        .clickBinding(view) { play(item) }
+    }
+}
+```
+
+### その他のバインディング
+
+- GenericBinding<br>
+    任意のViewインスタンスと、任意の LiveData / Flow を、action関数を介してバインドします。
+    enum値によって背景色を変える、など、特殊なバインドを実現するために使用します。
+- GenericBoolBinding<br>
+    Boolean型に特化した、GenericBindingです。BoolConvert型引数によって、bool値の反転をサポートします。
+- HeadlessBinding<br>
+    ビューを介さず、LiveData / Flow を action に直接バインドします。内部的には、[android-utilities](https://github.com/toyota-m2k/android-utilities) の disposableObserve() そのものですが、他のバインディングと同じ流儀にそろえる目的で利用します。
+- AlphaBinding<br>
+    ViewModel の Flow<Float>型プロパティを、ビューの透過度(alphaプロパティ)にバインドします。
+- AnimationBinding / FadeInOutBinding / MultiFadeInOutBinding<br>
+    `AnimationBinding` は、ViewModel の Flow<Boolean>型プロパティを、ビューのアニメーションにバインドします。ただし、このバインディングクラスは、`SequentialAnimation`や`ParallelAnimation`（ともに`IReversibleAnimation` 実装クラス）などを使った、複雑なアニメーションを実現するために用意しました。bool 値による単純なビューの FadeIn/Out には、`FadeInOutBinding` （複数のビューを同時にFadeIn/Outするなら `MultiFadeInOutBinding`）が便利です。
+- ReadOnlyBinding<br>
+    EditText をリードオンリーとするかどうかを、Flow<Boolean>にバインドします。余談ですが、Android の EditText は、他のOS (WinやiOS)のそれと違って、isReadOnly プロパティ的なやつが存在しないことに驚きました。
+    
