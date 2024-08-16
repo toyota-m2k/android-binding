@@ -398,9 +398,9 @@ visibilityBinding(), textBinding() などは、Binderクラスの拡張関数で
 |editLongBinding|EditLongBinding|EditText|text|Long|TwoWay|
 |editFloatBinding|EditFloatBinding|EditText|text|Float|TwoWay|
 
-- textBinding は、ViewModelの Flow<String>型データを、View（ButtonやTextViewなど）の text プロパティに単方向バインドします。
-- int/long/floatBinding は、それぞれ、Flow<Int>/Flow<Long>/Flow<Float>型データを、String型に変換して、Viewの text プロパティに単方向バインドします。
-- editTextBinding は、ViewModelの MutableStateFlow<String>型データを、EditText の text プロパティと双方向にバインドします。
+- textBinding は、ViewModelの Flow&lt;String>型データを、View（ButtonやTextViewなど）の text プロパティに単方向バインドします。
+- int/long/floatBinding は、それぞれ、Flow&lt;Int>/Flow&lt;Long>/Flow&lt;Float>型データを、String型に変換して、Viewの text プロパティに単方向バインドします。
+- editTextBinding は、ViewModelの MutableStateFlow&lt;String>型データを、EditText の text プロパティと双方向にバインドします。
 - editInt/Long/Float/Binding は、対応する数値型 MutableStateFlow との間で双方向バインドします。
 - デフォルトの実装は、String-数値型の変換に、toString/toIntなどの単純な関数を利用しています。map() や、ConvertLiveData で、FlowやLiveDataを加工して TextBinding または、EditTextBinding に渡すことにより、より高度な文字列の整形が可能になります。
 
@@ -419,9 +419,9 @@ visibilityBinding(), textBinding() などは、Binderクラスの拡張関数で
 ||||valueFrom|Float|OneWay|
 ||||valueTo|Float|OneWay|
 
-- `progressBarBinding` は、ViewModelのFlow<Int>型データを、`ProgressBar` の `progress` プロパティに単方向バインドします。必要に応じて、min/max プロパティに対する単方向バインドも設定できます。
-- `seekBarBinding` は、ViewModelのMutableStateFlow<Int>型データを、`SeekBar`の `value` プロパティと双方向バインドします。必要に応じて、`min`/`max` プロパティに対する単方向バインドも設定できます。
-- `sliderBinding` は、ViewModelのMutableStateFlow<Float>型データを、Material Component の `Slider` の `value` プロパティと双方向バインドします。必要に応じて、valueFrom/valueTo プロパティに対する単方向バインドも設定できます。
+- `progressBarBinding` は、ViewModelのFlow&lt;Int>型データを、`ProgressBar` の `progress` プロパティに単方向バインドします。必要に応じて、min/max プロパティに対する単方向バインドも設定できます。
+- `seekBarBinding` は、ViewModelのMutableStateFlow&lt;Int>型データを、`SeekBar`の `value` プロパティと双方向バインドします。必要に応じて、`min`/`max` プロパティに対する単方向バインドも設定できます。
+- `sliderBinding` は、ViewModelのMutableStateFlow&lt;Float>型データを、Material Component の `Slider` の `value` プロパティと双方向バインドします。必要に応じて、valueFrom/valueTo プロパティに対する単方向バインドも設定できます。
 
 ### ラジオボタンのバインディング
 
@@ -476,8 +476,8 @@ binder.materialRadioUnSelectableButtonGroupBinding(buttonToggleGroup, viewModel.
 |materialToggleButtonGroupBinding|MaterialToggleButtonGroupBinding|MaterialButtonToggleGroup|checkedButtonIds|List&lt;T:Any> (using IIDValueResolver&lt;t>)||TwoWay|
 |materialToggleButtonsBinding|MaterialToggleButtonsBinding|MaterialButtonToggleGroup|checkedButtonIds|Boolean(s)|TwoWay|
 
-- `materialToggleButtonGroupBinding` は、`MaterialButtonToggleGroup` の `checkedButtonIds` プロパティを `IIDValueResolver` によって変換された List&lt;T>を、  ViewModel の `MutableStateFlow<List<T>>` にバインドします。
-- `materialToggleButtonsBinding` は、個々のボタン（MaterialButtonToggleGroupの子要素）のチェック状態（MaterialButtonToggleGroupのcheckedButtonIdsから取得）を、ViewModel の MutableStateFlow<Boolean> を１つずつ双方向にバインドします。
+- `materialToggleButtonGroupBinding` は、`MaterialButtonToggleGroup` の `checkedButtonIds` プロパティを `IIDValueResolver` によって変換された List&lt;T>を、  ViewModel の `MutableStateFlow&lt;List&lt;T>>` にバインドします。
+- `materialToggleButtonsBinding` は、個々のボタン（MaterialButtonToggleGroupの子要素）のチェック状態（MaterialButtonToggleGroupのcheckedButtonIdsから取得）を、ViewModel の MutableStateFlow&lt;Boolean> を１つずつ双方向にバインドします。
 
 
 ```kotlin
@@ -504,8 +504,8 @@ binder.materialToggleButtonsBinding(group, BindingMode.TwoWay) {
 
 
 - `RecyclerView` と、その要素リストをバインドするため、要素の変更を監視可能な、MutableList派生クラス `ObservableList`を使用します。
-- recyclerViewBindingは、RecyclerView と ViewModel の ObservableList とを双方向にバインドします。D&Dによるリストの並べ替えもサポートしており、その有効・無効も MutableStateFlow<Boolean>型の変数にバインドして、動的に切り替えることも可能です。
-- recyclerViewGestureBindingは、リスト要素の右スワイプジェスチャーによる要素削除をサポートします。こちらもジェスチャーの有効・無効を MutableStateFlow<Boolean>型の変数にバインドして、動的に切り替えることも可能です。
+- recyclerViewBindingは、RecyclerView と ViewModel の ObservableList とを双方向にバインドします。D&Dによるリストの並べ替えもサポートしており、その有効・無効も MutableStateFlow&lt;Boolean>型の変数にバインドして、動的に切り替えることも可能です。
+- recyclerViewGestureBindingは、リスト要素の右スワイプジェスチャーによる要素削除をサポートします。こちらもジェスチャーの有効・無効を MutableStateFlow&lt;Boolean>型の変数にバインドして、動的に切り替えることも可能です。
 - 個々の要素と、それを表示するためのItem View は、引数 `bindView:(Binder, View, T)->Unit)` で接続しますが、その第一引数で RecyclerView の Item View のライフサイクルに合わせて動作するBinderインスタンスが渡されるので、 bindView内で、Item View に対するバインディングを定義できます。
 
 ```kotlin
@@ -534,16 +534,27 @@ fun onCreate(savedInstanceState:Bundle?) {
 ### その他のバインディング
 
 - GenericBinding<br>
-    任意のViewインスタンスと、任意の LiveData / Flow を、action関数を介してバインドします。
-    enum値によって背景色を変える、など、特殊なバインドを実現するために使用します。
+    任意のViewインスタンスと、任意のビューモデル（LiveData / Flow）を、action関数を介してバインドします。例えば、enum値によって背景色を変える、など、特殊なバインドを実現するために使用します。
 - GenericBoolBinding<br>
     Boolean型に特化した、GenericBindingです。BoolConvert型引数によって、bool値の反転をサポートします。
 - HeadlessBinding<br>
-    ビューを介さず、LiveData / Flow を action に直接バインドします。内部的には、[android-utilities](https://github.com/toyota-m2k/android-utilities) の disposableObserve() そのものですが、他のバインディングと同じ流儀にそろえる目的で利用します。
+    ビューを介さず、ビューモデルを action に直接バインドします。内部的には、[DisposableObserve](https://github.com/toyota-m2k/android-utilities/blob/main/libUtils/src/main/java/io/github/toyota32k/utils/DisposableObserver.kt) そのものですが、他のバインディングと同じ流儀にそろえることができます。
 - AlphaBinding<br>
-    ViewModel の Flow<Float>型プロパティを、ビューの透過度(alphaプロパティ)にバインドします。
+    ビューの透過度(alphaプロパティ)にビューモデル(Flow&lt;Float>)にバインドします。
 - AnimationBinding / FadeInOutBinding / MultiFadeInOutBinding<br>
-    `AnimationBinding` は、ViewModel の Flow<Boolean>型プロパティを、ビューのアニメーションにバインドします。ただし、このバインディングクラスは、`SequentialAnimation`や`ParallelAnimation`（ともに`IReversibleAnimation` 実装クラス）などを使った、複雑なアニメーションを実現するために用意しました。bool 値による単純なビューの FadeIn/Out には、`FadeInOutBinding` （複数のビューを同時にFadeIn/Outするなら `MultiFadeInOutBinding`）が便利です。
+    `AnimationBinding` は、ViewModel の Flow&lt;Boolean>型プロパティを、ビューのアニメーションにバインドします。ただし、このバインディングクラスは、`SequentialAnimation`や`ParallelAnimation`（ともに`IReversibleAnimation` 実装クラス）などを使った、複雑なアニメーションを実現するために用意しました。bool 値による単純なビューの FadeIn/Out には、`FadeInOutBinding` （複数のビューを同時にFadeIn/Outするなら `MultiFadeInOutBinding`）が便利です。
 - ReadOnlyBinding<br>
-    EditText をリードオンリーとするかどうかを、Flow<Boolean>にバインドします。余談ですが、Android の EditText は、他のOS (WinやiOS)のそれと違って、isReadOnly プロパティ的なやつが存在しないことに驚きました。
+    EditText をリードオンリーとするかどうかを、ビューモデル（Flow<Boolean>）にバインドします。余談ですが、Android の EditText は、他のOS (WinやiOS)のそれと違って、isReadOnly プロパティ的なやつが存在しないことに驚きました。
+- ActivityBinding<br>
+    Activity の各種フラグをビューモデルにバインドします。内部的には、`HeadlessBinding` を使って機能を実現しています。
+    - activityStatusBarBinding<br>
+    `StatusBar` 表示状態を、ビューモデル(Flow&lt;Boolean>)にバインドします。
+    - activityActionBarBinding<br>
+    `ActionBar` の表示状態を、ビューモデル(Flow&lt;Boolean>)にバインドします。
+    - activityOrientationBinding<br>
+    Activityの Orientation を、ビューモデル(Flow&lt;[ActivityOrientation](https://github.com/toyota-m2k/android-utilities/blob/cf408fb4aee6e45763f6970ddccdb071b781125b/libUtils/src/main/java/io/github/toyota32k/utils/ActivityExt.kt#L49)>)にバインドします。
+    - activityOptionsBinding<br>
+    上記３つ（StatusBar, ActionBar の表示/非表示、Orientation）をまとめてバインドします。
+    バインドするデータ型は、[ActivityOptions](https://github.com/toyota-m2k/android-utilities/blob/cf408fb4aee6e45763f6970ddccdb071b781125b/libUtils/src/main/java/io/github/toyota32k/utils/ActivityExt.kt#L59) です。
+
     

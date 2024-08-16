@@ -1,19 +1,19 @@
 [versions]
 #plugins
-kotlin = "1.9.23"
-agp = "8.5.1"
+kotlin = "2.0.10"
+agp = "8.5.2"
 
 #libraries
-activity = "1.9.0"
+activity = "1.9.1"
 androidUtilities = "2.0.7"
 core = "1.6.1"
 coreKtx = "1.13.1"
 appcompat = "1.7.0"
 coreTesting = "2.2.0"
-lifecycleRuntimeKtx = "2.8.3"
-lifecycleLivedataKtx = "2.8.3"
-lifecycleViewmodelKtx = "2.8.3"
-lifecycleService = "2.8.3"
+lifecycleRuntimeKtx = "2.8.4"
+lifecycleLivedataKtx = "2.8.4"
+lifecycleViewmodelKtx = "2.8.4"
+lifecycleService = "2.8.4"
 material = "1.12.0"
 constraintLayout = "2.1.4"
 lifecycle = "2.2.0"
