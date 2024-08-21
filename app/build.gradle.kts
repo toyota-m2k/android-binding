@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.android.utilities)
 
     implementation(project(":libBinder"))
+    implementation(libs.androidx.activity)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxJunit)
     androidTestImplementation(libs.espressoCore)

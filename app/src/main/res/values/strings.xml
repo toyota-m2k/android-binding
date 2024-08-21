@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">AndroidBinder</string>
+    <string name="radio1">Radio-1</string>
+    <string name="radio2">Radio-2</string>
+    <string name="radio3">Radio-3</string>
+    <string name="toggle1">Toggle-1</string>
+    <string name="toggle2">Toggle-2</string>
+    <string name="toggle3">Toggle-3</string>
 </resources>

@@ -1,9 +1,14 @@
 package io.github.toyota32k.binder
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.InputType
+import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import io.github.toyota32k.binder.command.LiteUnitCommand
 import io.github.toyota32k.binder.command.bindCommand
@@ -15,6 +20,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+/**
+ * binder の概要説明用
+ *
+ * See https://github.com/toyota-m2k/android-binding?tab=readme-ov-file#%E4%BD%BF%E3%81%84%E6%96%B9
+ */
 class MainActivity : AppCompatActivity() {
     object MyAuthenticator {
         suspend fun tryLogin(name:String,pwd:String) : Boolean {
@@ -57,8 +67,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
         controls = ActivityMainBinding.inflate(layoutInflater)
         setContentView(controls.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(controls.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         binder
             .owner(this)
@@ -69,6 +87,7 @@ class MainActivity : AppCompatActivity() {
             .multiEnableBinding(arrayOf(controls.userName, controls.password, controls.showPassword), viewModel.isBusy, BoolConvert.Inverse)
             .bindCommand(viewModel.loginCommand, controls.loginButton)
             .bindCommand(viewModel.logoutCommand, controls.logoutButton, this@MainActivity::onLogout)
+            .clickBinding(controls.catalogButton, this@MainActivity::showCatalog)
             .genericBinding(controls.password, viewModel.showPassword) { pwd, show ->
                 pwd.inputType = if(show==true) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                                 else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
@@ -79,6 +98,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun onLogout() {
         viewModel.authenticated.value = false
+    }
+
+    private fun showCatalog(@Suppress("UNUSED_PARAMETER") v: View) {
+        val intent = Intent(this, CatalogActivity::class.java)
+        startActivity(intent)
     }
 
 }

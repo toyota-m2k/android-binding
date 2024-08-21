@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CatalogActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        >
+        <!-- Text Binding -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TextBinding / EditTextBinding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+            <EditText
+                android:id="@+id/edit_text"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="input text"
+                />
+            <TextView
+                android:id="@+id/text_view"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/black"
+            android:layout_marginVertical="16dp"
+            />
+
+        <!-- Slider Binding -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="IntBinding / SliderBinding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+            <EditText
+                android:id="@+id/edit_number_text"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="input number"
+                android:inputType="numberDecimal"
+                />
+            <TextView
+                android:id="@+id/number_view"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                />
+        </LinearLayout>
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:valueFrom="0"
+            android:valueTo="100"
+            android:stepSize="1"
+            />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/black"
+            android:layout_marginVertical="16dp"
+            />
+        <!-- Radio Group Binding -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="RadioGroupBinding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            />
+        <RadioGroup
+            android:id="@+id/radioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/radio1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/radio1"
+                />
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/radio2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/radio2"
+                />
+            <androidx.appcompat.widget.AppCompatRadioButton
+                android:id="@+id/radio3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/radio3"
+                />
+        </RadioGroup>
+
+        <!-- MaterialRadioButtonGroupBinding -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MaterialRadioButtonGroupBinding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleGroupAsRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:singleSelection="true"
+            app:selectionRequired="true"
+            android:gravity="start"
+            >
+            <Button
+                android:id="@+id/mtRadio1"
+                android:text="@string/radio1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+            <Button
+                android:id="@+id/mtRadio2"
+                android:text="@string/radio2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+            <Button
+                android:id="@+id/mtRadio3"
+                android:text="@string/radio3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+        <TextView
+            android:id="@+id/radioValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            tools:text="selection"
+            android:layout_marginTop="8dp"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/black"
+            android:layout_marginVertical="16dp"
+            />
+
+        <!-- Toggle Buttons -->
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:singleSelection="false"
+            app:selectionRequired="false"
+            android:gravity="start"
+            >
+            <Button
+                android:id="@+id/toggle1"
+                android:text="@string/toggle1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+            <Button
+                android:id="@+id/toggle2"
+                android:text="@string/toggle2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+            <Button
+                android:id="@+id/toggle3"
+                android:text="@string/toggle3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+        <TextView
+            android:id="@+id/toggleValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            tools:text="selection"
+            android:layout_marginTop="8dp"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/black"
+            android:layout_marginVertical="16dp"
+            />
+
+        <!-- Boolean Binding -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Check/Visibility/Enable Binding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <CheckBox
+                android:id="@+id/check_box_show"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Show"/>
+            <CheckBox
+                android:id="@+id/check_box_enable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enable"/>
+            <Button
+                android:id="@+id/fade_in_out_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="Fade In/Out"/>
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/sample_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/sample_button"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Sample"
+                />
+            <EditText
+                android:id="@+id/sample_edit_text"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="Sample"
+                />
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/black"
+            android:layout_marginVertical="16dp"
+            />
+        <!-- RecyclerView Binding -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="RecyclerViewBinding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:padding="1dp"
+            android:background="@drawable/border"
+            />
+
+        <Button
+            android:id="@+id/add_list_item_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Item"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/black"
+            android:layout_marginVertical="16dp"
+            />
+
+        <!-- Activity Binding -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Activity Binding"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            />
+
+        <CheckBox
+            android:id="@+id/check_box_status_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status Bar"
+            />
+        <CheckBox
+            android:id="@+id/check_box_action_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Action Bar"
+            />
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/orientationGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:singleSelection="true"
+            app:selectionRequired="true"
+            android:gravity="start"
+            >
+            <Button
+                android:id="@+id/radio_landscape"
+                android:text="Landscape"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+            <Button
+                android:id="@+id/radio_portrait"
+                android:text="Portrait"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                style="?attr/materialButtonOutlinedStyle"
+                />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+    </LinearLayout>
+
+
+</ScrollView>
