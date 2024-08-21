@@ -38,7 +38,7 @@ dependencies {
 ## 使い方
 
 ここでは、説明のため簡単なログイン画面を作成してみます。
-（サンプルプログラムの MainActivity を参照）
+（サンプルプログラムの [MainActivity](https://github.com/toyota-m2k/android-binding/blob/main/app/src/main/java/io/github/toyota32k/binder/MainActivity.kt) を参照）
 
 ### ビューモデルの作成
 
@@ -343,31 +343,36 @@ class AuthenticationViewModel : ViewModel() {
 
 ちなみに、ReleableCommand は、トリガーされた状態をハンドラに渡すまで、内部(MutableLiveData)に保持していて、ハンドラをコールしたら、状態をリセットすることで、複数回の呼び出しを回避しています。つまり、flowを監視する方法とコマンドハンドラを使う方法の「いいとこどり」です。ただし、LiteCommand に比べて、オーバーヘッドが大きいので、利用は必要最小限にとどめましょう。また、LiteCommand は、bind() メソッドで、ハンドラをいくつでも登録できるのに対し、ReliableCommand は、ハンドラを１つしか bind() できません（複数回 bind() を実行すると IllegalStateException をスローします）。とはいえ、１つのコマンドに複数のハンドラを登録しなければならない状況はほとんどないので、実用上は問題にならないと思います。
 
-## バインディングモード
+## リファレンス
+
+以下では、各バインディングクラスの使い方を説明します。
+主要なバインディングクラスについては、サンプルプログラムの [CatalogActivity](https://github.com/toyota-m2k/android-binding/blob/main/app/src/main/java/io/github/toyota32k/binder/CatalogActivity.kt) に、利用例を示しました。
+
+### バインディングモード
 
 XAMLのバインディングと同じように（というかマネしたので）、android-binding にも、バインディングモードがあります。
 
-### BindingMode.OneWay
+#### BindingMode.OneWay
 
 ViewModel（`Flow` や `LiveDate`）から、ビューのプロパティへの単方向バインディング。<br>
 visibilityBinding, enableBinding, textBinding, progressBarBinding などは、OneWayモードだけをサポートします。
 
-### BindingMode.TwoWay
+#### BindingMode.TwoWay
 
 ViewModel（`MutableStateFlow` や `MutableLiveData`) と、ビューのプロパティとの双方向バインディング。
 editTextBinding, checkBinding, seekBarBinding などは、TwoWayモードをサポートします。TwoWayモードをサポートするバインディングは、OneWay, OneWayToSourceモードもサポートしており、bindingMode引数で動作を指定できます。
 
-### BindingMode.OneWayToSource
+#### BindingMode.OneWayToSource
 
 ビューのプロパティから、ViewModel（`MutableStateFlow` や `MutableLiveData`) への単方向バインディング。<br>
 XAMLのバインディングモードにあったからマネして作ったけれど、TwoWay で代用できるので、ほとんど（まったく？）使ったことがないかも。
 
-## Binder拡張関数とバインディングクラス
+### Binder拡張関数とバインディングクラス
 
 visibilityBinding(), textBinding() などは、Binderクラスの拡張関数です。これらは、それぞれ、VisibilityBinding, TextBinding などの`バインディングクラス` を生成してBinderに登録します。
 通常、これらのバインディングクラスを直接作成して扱う必要はありませんが、より柔軟で細かい制御を行いたい場合は、それぞれのクラスを作成して利用することも可能です。
 
-### Boolean型バインディング
+#### Boolean型バインディング
 
 | 拡張関数                   | バインディングクラス       | ビュー                                                 | プロパティ                              | バインディングモード  |
 |------------------------|------------------------|-------------------------------------------------------|------------------------------------|-------------|
@@ -386,7 +391,7 @@ visibilityBinding(), textBinding() などは、Binderクラスの拡張関数で
 - visibilityBinding, multiVisibilityBinding, fadeInOutBinding, multiFadeInOutBinding は、HiddenMode 引数により、hidden時のVisibility (View.GONE/View.INVISIBLE) を指定できます。
 
     
-### Text型 バインディング
+#### Text型 バインディング
 
 | 拡張関数      | バインディングクラス   | ビュー   | プロパティ | データ型 | バインディングモード  |
 |--------|---------|---------|------------|-----|------|
@@ -406,7 +411,7 @@ visibilityBinding(), textBinding() などは、Binderクラスの拡張関数で
 - デフォルトの実装は、String-数値型の変換に、toString/toIntなどの単純な関数を利用しています。map() や、ConvertLiveData で、FlowやLiveDataを加工して TextBinding または、EditTextBinding に渡すことにより、より高度な文字列の整形が可能になります。
 
 
-### ProgressBar/SeekBar/Slider のバインディング
+#### ProgressBar/SeekBar/Slider のバインディング
 
 | 拡張関数      | バインディングクラス   | ビュー   | プロパティ | データ型 | バインディングモード  |
 |--------|---------|---------|------------|-----|------|
@@ -424,7 +429,7 @@ visibilityBinding(), textBinding() などは、Binderクラスの拡張関数で
 - `seekBarBinding` は、ViewModelのMutableStateFlow&lt;Int>型データを、`SeekBar`の `value` プロパティと双方向バインドします。必要に応じて、`min`/`max` プロパティに対する単方向バインドも設定できます。
 - `sliderBinding` は、ViewModelのMutableStateFlow&lt;Float>型データを、Material Component の `Slider` の `value` プロパティと双方向バインドします。必要に応じて、valueFrom/valueTo プロパティに対する単方向バインドも設定できます。
 
-### ラジオボタンのバインディング
+#### ラジオボタンのバインディング
 
 
 | 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
@@ -469,7 +474,7 @@ class ViewModel {
 binder.materialRadioUnSelectableButtonGroupBinding(buttonToggleGroup, viewModel.rgb, RGB.IDResolver)
 ```
 
-### 複数選択可能なトグルボタングループ（MaterialButtonToggleGroup）のバインディング
+#### 複数選択可能なトグルボタングループ（MaterialButtonToggleGroup）のバインディング
 
 
 | 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
@@ -496,7 +501,7 @@ binder.materialToggleButtonsBinding(group, BindingMode.TwoWay) {
 
 ```
 
-### RecyclerView のバインディング
+#### RecyclerView のバインディング
 
 | 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
 |---|---|---|---|---|
@@ -532,7 +537,7 @@ fun onCreate(savedInstanceState:Bundle?) {
 }
 ```
 
-### その他のバインディング
+#### その他のバインディング
 
 - GenericBinding<br>
     任意のViewインスタンスと、任意のビューモデル（LiveData / Flow）を、action関数を介してバインドします。例えば、enum値によって背景色を変える、など、特殊なバインドを実現するために使用します。
