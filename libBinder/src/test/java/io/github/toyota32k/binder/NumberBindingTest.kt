@@ -33,7 +33,7 @@ class NumberBindingTest {
     fun oneWayNumberTest() {
         val activity = createActivity()
         val view = TextView(activity)
-        val data = MutableLiveData<Int>(111)
+        val data = MutableLiveData(111)
         view.text="222"
 
         val binding = NumberBinding.create(activity, view, data)
@@ -54,7 +54,7 @@ class NumberBindingTest {
     fun oneWayToSourceNumberTest() {
         val activity = createActivity()
         val view = EditText(activity)
-        val data = MutableLiveData<Int?>(111)
+        val data = MutableLiveData(111)
         view.setText("222")
 
         val binding = EditNumberBinding.create(activity, view, data, BindingMode.OneWayToSource)
@@ -75,7 +75,7 @@ class NumberBindingTest {
     fun twoWayNumberTest() {
         val activity = createActivity()
         val view = EditText(activity)
-        val data = MutableLiveData<Int?>(111)
+        val data = MutableLiveData(111)
         view.setText("222")
 
         val binding = EditNumberBinding.create(activity, view, data, BindingMode.TwoWay)
@@ -95,7 +95,7 @@ class NumberBindingTest {
     fun binderTest() {
         val activity = createActivity()
         val view = EditText(activity)
-        val data = MutableLiveData<Int?>(111)
+        val data = MutableLiveData(111)
         view.setText("222")
 
         val binder = Binder().owner(activity)
