@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
             .bindCommand(viewModel.loginCommand, controls.loginButton)
             .bindCommand(viewModel.logoutCommand, controls.logoutButton, this@MainActivity::onLogout)
             .genericBinding(controls.password, viewModel.showPassword) { pwd, show ->
-                pwd.inputType = if(show==true) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                pwd.inputType = if(show) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                 else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             }
             .visibilityBinding(controls.authPanel, viewModel.authenticated, BoolConvert.Inverse, VisibilityBinding.HiddenMode.HideByGone)
@@ -236,7 +236,7 @@ loginCommand はビューモデル内でハンドラまで定義しているの�
 
 最後に、authenticatedによって、auth_panelとmain_panel の表示をトグルしています。
 このように、visibilityBinding, enableBinding, checkBinding など、Boolean型の状態プロパティとビューの属性をバインドするメソッドは、
-BoolConvert型の引数（デフォルトはStraight）をとることができます。visibility, enable など単方向バインドしか存在しな場合は、
+BoolConvert型の引数（デフォルトはStraight）指定できます。visibility, enable など単方向バインドしか存在しな場合は、
 `viewModel.authenticated.map {!it}` を渡しても同じ効果が得られます。しかし、checkBindingで双方向バインドしたい場合には、この方法は使えません。
  map() が返すのは Flow&lt;Boolean> であって、MutableStateFlowに値を書き戻すことができないからです。このような時、
 `BoolConvert.Inverse` を指定すれば、bool値を反転しつつ双方向にリンクすることが可能です。

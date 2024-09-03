@@ -1,5 +1,6 @@
 package io.github.toyota32k.binder
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -23,6 +24,7 @@ import io.github.toyota32k.utils.ActivityOrientation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.util.Date
+import io.github.toyota32k.binder.R
 
 class CatalogActivity : AppCompatActivity() {
     class CatalogViewModel : ViewModel() {
@@ -161,7 +163,7 @@ class CatalogActivity : AppCompatActivity() {
             .multiEnableBinding(arrayOf(controls.sampleButton, controls.sampleEditText), viewModel.isEnabled)
             .fadeInOutBinding(controls.sampleContainer, viewModel.visibleWithFadeEffect)
             // RecyclerView binding
-            .recyclerViewGestureBinding(controls.recyclerView, viewModel.list,R.layout.list_item,
+            .recyclerViewGestureBinding(controls.recyclerView, viewModel.list, R.layout.list_item,
                 gestureParams = RecyclerViewBinding.GestureParams(true,true)) { _, view, item->
                     // この例は固定値なので binder は使わない
                     view.findViewById<TextView>(R.id.title).text = item.title
