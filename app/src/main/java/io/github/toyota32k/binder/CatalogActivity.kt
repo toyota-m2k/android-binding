@@ -1,6 +1,5 @@
 package io.github.toyota32k.binder
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -13,18 +12,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
-import io.github.toyota32k.binder.CatalogActivity.CatalogViewModel.RadioSampleValue.entries
-import io.github.toyota32k.binder.MainActivity.AuthenticationViewModel
 import io.github.toyota32k.binder.command.LiteUnitCommand
 import io.github.toyota32k.binder.command.bindCommand
 import io.github.toyota32k.binder.databinding.ActivityCatalogBinding
-import io.github.toyota32k.binder.databinding.ActivityMainBinding
 import io.github.toyota32k.binder.list.ObservableList
 import io.github.toyota32k.utils.ActivityOrientation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.util.Date
-import io.github.toyota32k.binder.R
 
 class CatalogActivity : AppCompatActivity() {
     class CatalogViewModel : ViewModel() {
