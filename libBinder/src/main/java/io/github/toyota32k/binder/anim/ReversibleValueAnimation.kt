@@ -5,6 +5,7 @@ import android.animation.ValueAnimator
 import io.github.toyota32k.binder.anim.IReversibleAnimation.Companion.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -141,5 +142,4 @@ class ReversibleValueAnimation(override val duration:Long) : IReversibleAnimatio
         updateEvent = fn
         return this
     }
-
 }

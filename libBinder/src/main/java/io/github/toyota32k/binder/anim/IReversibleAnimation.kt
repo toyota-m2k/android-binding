@@ -1,6 +1,7 @@
 package io.github.toyota32k.binder.anim
 
 import io.github.toyota32k.utils.UtLog
+import kotlinx.coroutines.delay
 
 /**
  * 逆戻し可能あアニメーションのi/f
@@ -38,6 +39,45 @@ interface IReversibleAnimation {
      * 初期化のために、アニメーションせずに最終状態にする
      */
     fun invokeLastState(reverse:Boolean)
+
+    // region 単体利用のための API
+
+    /**
+     * value 0 --> 1
+     */
+    suspend fun advance() = run(false)
+
+    /**
+     * value 1 --> 0
+     */
+    suspend fun back() = run(true)
+
+    /**
+     * 行って戻る
+     * アイコンを一定時間表示して、非表示に戻す、などの用途。
+     * @param duration 行ってから、戻るまでの時間
+     */
+    suspend fun advanceAndBack(duration:Long) {
+        advance()
+        delay(duration)
+        back()
+    }
+
+    /**
+     * 行って戻る
+     * @param reverseFirst  trueなら、戻って行く
+     */
+    suspend fun advanceAndBack(reverseFirst:Boolean, duration:Long) {
+        if(reverseFirst) {
+            back()
+            delay(duration)
+            advance()
+        } else {
+            advanceAndBack(duration)
+        }
+    }
+
+    // endregion
 
     companion object {
         val logger = UtLog("Anim", null, "io.github.toyota32k.")
