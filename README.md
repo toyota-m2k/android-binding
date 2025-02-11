@@ -1,49 +1,90 @@
-# android-binding ... View-ViewModel Binding for Android Application
+# Android Binding
 
 
-Androidアプリ用の、View-ViewModelバインディングを実現するライブラリです。
+## About This Library
+This library facilitates View-ViewModel binding for Android applications.
 
-Windows WFP/UWP方面からAndroidに移住してきた私は、
-layout.xmlとjava/ktのコードをバインドする手段が、あまりにも貧弱（「無い」といっても過言ではない！）ことに驚きました。
-DataBinding という仕組みはあるものの、バインドできないプロパティはあるし、ついさっきまで動いていたコードが、突然kaptエラーになったり、
-悪いことばかり起きるので、数週間の格闘の末、完全に見切りをつけました。しかし、リアクティブなプログラムを書くためには、バインディングの仕掛けは不可欠です。
-そこでやむを得ず自作したのが、このバインディングライブラリです。
-今後は Jetpack Compose がUI開発の中心になって、layout.xml は消えゆく運命なのかもしれませんが、
-個人的には、複雑なUIを書くとき layout.xml の方が自由に小細工できて書きやすいので、当面は開発を続けたいと思っています。
-ちなみに、ViewBinding （xmlからビューの定義を生成するやつ）の方は、（まれに、定義が作られなくてリビルドしたりするけど）安定しているので、このライブラリと併用していますが、必須ではありません。。
+## Motivation
+With the introduction of `androidx.lifecycle.ViewModel`, developing Android applications using the MVVM architecture has become common practice. However, the `Databinding` provided by Android Jetpack is extremely inadequate. It lacks the ability to bind certain properties, fails to reflect changes in XML, and suddenly encounters inexplicable kapt errors, leading to numerous issues. After several weeks of struggle, I decided to create my own library.
+
+- Declarative binding description
+- Operates in accordance with the lifecycle of Activities/Fragments
+- Applicable to custom views and dialogs
+- Reduces implementation and maintenance costs with concise descriptions
+
+By the way, ViewBinding (which generates definitions from XML) is very stable and easy to use (unlike DataBinding), so I use it in samples, although it is not mandatory.
 
 ## Gradle
 
-settings.gradle.kts で、mavenリポジトリ https://jitpack.io への参照を定義。  
+Define a reference to the Maven repository `https://jitpack.io` in `settings.gradle.kts`.
 
 ```kotlin
-allprojects {
-  repositories {
-    ...
-    maven { url 'https://jitpack.io' }
-  }
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        mavenLocal()
+        maven { url = uri("https://jitpack.io") }
+    }
 }
 ```
 
-モジュールの build.gradle で、dependencies を追加。
-一部のクラスが android-utilities のクラス/インターフェースを継承/実装しているので android-utilities も依存関係に追加してください。
+Add dependencies in the module's `build.gradle`. 
+Since some classes inherit/implement classes/interfaces from `android-utilities`, please add `android-utilities` to the dependencies if needed. 
 
 ```kotlin
-dependencies {
-    implementation("com.github.toyota-m2k:android-utilities:Tag")
-    implementation("com.github.toyota-m2k:android-binding:Tag")
+dependencies { 
+    implementation("com.github.toyota-m2k:android-utilities:Tag") 
+    implementation("com.github.toyota-m2k:android-binding:Tag") 
 }
 ```
 
-## 使い方
+## Basic Structure of the Library
 
-ここでは、説明のため簡単なログイン画面を作成してみます。
-（サンプルプログラムの [MainActivity](https://github.com/toyota-m2k/android-binding/blob/main/app/src/main/java/io/github/toyota32k/binder/MainActivity.kt) を参照）
+This library mainly uses three types of classes to describe bindings.
 
-### ビューモデルの作成
+### Binding Classes
+
+These classes implement the `IBinding` interface, which maintains the association (binding) between the properties of a View and the observable properties (LiveData/Flow) of a ViewModel.
+
+For example, `EnableBinding` monitors changes in a ViewModel's Flow&lt;Boolean> (or LiveData&lt;Boolean>) property and reflects those changes in the View's isEnabled property (one-way binding). `EditTextBinding` monitors changes in a ViewModel's MutableStateFlow&lt;String> (or MutableLiveData&lt;Boolean>) property, reflects those changes in the EditText's text property, and also monitors edit operations in the EditText to write the editing results back to the ViewModel's property (two-way binding).
+
+Various binding classes are provided according to the types and behaviors of the Views and properties to be bound. For details, please refer to the [Reference](Reference-ja.md). Additionally, by inheriting the `BaseBinding` abstract class, it is possible to implement new binding classes for custom views and properties.
+
+Moreover, each binding class is linked with the lifecycle of a `LifecycleOwner` (such as an `Activity`). When the Activity is destroyed, the bindings are automatically released. This prevents observer leaks and unexpected errors from operating on destroyed Activities or Views.
+
+In previous versions of android-binder (v1.x), binding classes were instantiated by calling the static method `create()` of each binding class. However, from v2.x onwards, it is recommended to describe bindings using the `Binder` class and its extension functions. Note that, with a few exceptions, the extension functions are defined with names that are the lowercase versions of the binding class names.
+
+
+### Command Classes
+
+Command classes (`ICommand` interface) are an event system that registers (binds) action handlers (functions) and can be invoked at any time. When a View is attached to this command class, the invoke() method is called in response to its click (tap) event. However, when EditText is attached, the Return key press event triggers the invoke() method.
+
+Instances of command classes can be stored anywhere. Typically, they are collectively stored as fields in the ViewModel. Action handlers can be implemented within the ViewModel and bound at the time of instantiating the command class, or if they involve other UI operations, they can be implemented on the Activity side and bound together with the View in onCreate. In other words, by using command classes, you can achieve both the flexibility of choosing the implementation location for action handlers and the readability of declaratively binding them in the ViewModel or onCreate.
+
+It is recommended to use the `bindCommand()` extension function of the Binder for binding instances of command classes with Views (and/or Actions).
+
+### Binder Class
+
+The `Binder` class is a utility class provided by this library to describe bindings more concisely.
+
+`Binder` is a collection of `IDisposable` objects and also implements `IDisposable` itself. Calling its `dispose()` method will dispose of all the `IDisposable` objects it holds. Furthermore, the Binder monitors the lifecycle of the LifecycleOwner set by the `owner()` method, and when it is destroyed,`dispose()` is automatically executed. This eliminates the need for explicit dispose() calls in onDestroy().
+
+Using `Binder` has the following benefits:
+
+- No need to secure member variables in the Activity to hold instances of binding classes or disposables for unbinding.
+- Automates binding-related cleanup processes through onDispose().
+- Allows more concise binding descriptions by using extension functions such as clickBinding() and bindCommand().
+
+## Tutorial
+
+Here, for the sake of explanation, we will create a simple login screen. (The actual behavior can be confirmed in the sample program [MainActivity](https://github.com/toyota-m2k/android-binding/blob/main/app/src/main/java/io/github/toyota32k/binder/MainActivity.kt).)
+
+### Creating the ViewModel
 
 ```kotlin
-    class AuthenticationViewModel : ViewModel() {
+class AuthenticationViewModel : ViewModel() {
     val userName = MutableStateFlow<String>("")
     val password = MutableStateFlow<String>("")
     val showPassword = MutableStateFlow<Boolean>(false)
@@ -52,13 +93,13 @@ dependencies {
         u.isNotEmpty() && p.isNotEmpty() && !b
     }
     val loginCommand = LiteUnitCommand {
-        // 認証中はビジーフラグを立てる
+        // Set the busy flag during authentication
         isBusy.value = true
-        // サブスレッドで認証を実行
+        // Perform authentication in a background thread
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 if (MyAuthenticator.tryLogin(userName.value, password.value)) {
-                    // 認証成功
+                    // Authentication successful
                     authenticated.value = true
                 }
             } finally {
@@ -70,13 +111,14 @@ dependencies {
     val authenticated: MutableStateFlow<Boolean> = MutableStateFlow(false)
 }
 ```
-ビューモデルでは、認証情報としてユーザー名(`userName`)とパスワードの文字列(`password`)、認証中フラグ(`isBusy`)、および、パスワードを表示するかどうかのフラグ(`showPassword`) をMutableStateFlowとして保持しています。
-`userName`, `password` および、、`isBusy` を combineして フロー `isReady` を生成しています。コマンドとして、`loginCommand`と`logoutCommand` を用意しました。
-説明のため、`loginCommand` は、その動作をビューモデル内に実装して、LiteUnitCommand のコンストラクタで初期化する例を、`logoutCommand` は、
-コマンドのインスタンスだけビューモデル内に用意し、ビューとのバインド時に処理内容を渡す構成にしました。
-また、この例では、単純化のため、認証が成功すると `authenticated` にtrueをセットすることで、同じActivity内でビューを切り替えるようにしています。
 
-### レイアウト(layout.xml)の作成
+In this `AuthenticationViewModel`, the authentication information such as the username (`userName`), password string (`password`), busy flag (`isBusy`), and the flag to show or hide the password (`showPassword`) are maintained as `MutableStateFlow` objects. The `isReady` flow is generated by combining `userName`, `password`, and `isBusy`. Commands such as `loginCommand` and `logoutCommand` are prepared.
+
+The `loginCommand` is implemented within the ViewModel and initialized in the constructor of `LiteUnitCommand`, so it can be executed simply by binding to events like the click event of a login button. On the other hand, the logout button has no defined behavior yet. This will be defined later when binding the view.
+
+In this example, to simplify, upon successful authentication, `authenticated` is set to `true`, which toggles the view within the same Activity.
+
+### Creating the Layout (layout.xml)
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -145,11 +187,10 @@ dependencies {
 
 </FrameLayout>
 ```
-未認証状態で表示される `auth_panel`には、ユーザー名、パスワードの入力欄、「パスワードを表示」するチェックボックス、ログインボタンを、
-認証状態で表示される、`main_panel` には、"Authenticated" の文字とログアウトボタンを配置しました。
-ViewModelとバインドするコントロールに id を振ること以外に、特別なルールはありません。
 
-### バインディングの記述
+The `auth_panel`, which is displayed in an unauthenticated state, includes input fields for username and password, a checkbox for "Show Password," and a login button. The `main_panel`, displayed in an authenticated state, contains the text "Authenticated" and a logout button. There are no special rules other than assigning IDs to the controls that will be bound to the ViewModel.
+
+### Describing the Binding
 
 ```kotlin
 class MainActivity : AppCompatActivity() {
@@ -171,8 +212,9 @@ class MainActivity : AppCompatActivity() {
             .bindCommand(viewModel.loginCommand, controls.loginButton)
             .bindCommand(viewModel.logoutCommand, controls.logoutButton, this@MainActivity::onLogout)
             .genericBinding(controls.password, viewModel.showPassword) { pwd, show ->
-                pwd.inputType = if(show) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                pwd.inputType = 
+                    if (show) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                    else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             }
             .visibilityBinding(controls.authPanel, viewModel.authenticated, BoolConvert.Inverse, VisibilityBinding.HiddenMode.HideByGone)
             .visibilityBinding(controls.mainPanel, viewModel.authenticated, BoolConvert.Straight, VisibilityBinding.HiddenMode.HideByGone)
@@ -184,383 +226,77 @@ class MainActivity : AppCompatActivity() {
 }
 ```
 
-まず、Activityのメンバー変数として、`viewModel`, `binder` インスタンスを用意します。これらは、Activity のライフサイクルにあわせて動作するので、普通にコンストラクタで初期化して大丈夫です。
+Let's explain each part step-by-step. (In this example, ViewBinding is used, but its explanation is omitted.)
 
-```
+```kotlin
     private val viewModel by viewModels<AuthenticationViewModel>()
     private val binder = Binder()
 ```
 
-
-以下、onCreateで、binder を使って、ビューとビューモデル、動作をバインドしていきます。
-最初に、binder.owener()で、ライフサイクルオーナー(this@MainActivity) を設定しています。これにより、この binder インスタンスは、MainActivity のライフサイクルに従った動作を行います。すなわち、アクティビティがdestroyされたときに、すべてのバインディングが自動的に破棄されるので、リソースがリークする心配がありません。
+Prepare instances of `ViewModel` and `Binder` as member variables of the Activity. The `Binder` operates according to the Activity's lifecycle, so it is fine to initialize it in the constructor.
 
 ```kotlin
-        binder
-            .owner(this)
-```
-
-まず、EditText とビューモデルの文字列(MutableStateFlow&lt;String>)を、双方向にバインドします。
-また、CheckBox（CompoundButton）の isChecked プロパティと、ビューモデルのshowPassword(:MutableStateFlow&lt;String>)も、双方向にバインドします。
-```kotlin
-            .editTextBinding(controls.userName, viewModel.userName)
-            .editTextBinding(controls.password, viewModel.password)
-            .checkBinding(controls.showPassword, viewModel.showPassword)
-```
-
-さらに、isReady をログインボタンボタンの有効、無効（isEnabledプロパティ）にバインドします。
-isBusy は、`multiEnableBinding`() を使って、複数のビュー（ユーザー名、パスワード入力用のEditText, パスワードを表示チェックボックス）のisEnabledに対して、まとめてバインド設定しています。
-
-```kotlin
-            .enableBinding(controls.loginButton, viewModel.isReady)
-            .multiEnableBinding(arrayOf(controls.userName, controls.password, controls.showPassword), viewModel.isBusy, BoolConvert.Inverse)
-```
-
-次に、コマンドを介して、ボタンとアクションをバインドします。<br>
-loginCommand はビューモデル内でハンドラまで定義しているので、コマンドとボタンをバインドするだけです。一方、logoutCommandの方は（説明のために）ビューモデル内でハンドラを定義していないません。そこで、`bindCommand`の第３引数でハンドラ（この例ではMainActivityのメソッド）を渡しています。
-このように、コマンド(`ICommand`/`IUnitCommand`)を介して、ビューとハンドラを柔軟にバインドすることができます。
-```kotlin
-            .bindCommand(viewModel.loginCommand, controls.loginButton)
-            .bindCommand(viewModel.logoutCommand, controls.logoutButton, this@MainActivity::onLogout)
-```
-
-
-ここで「パスワードを表示」チェックボックスの on/off に応じて、EditText の inputType を更新したいのですが、inputType のような特殊なプロパティとBoolean値をバインドする専用のクラスは用意していません。このような特殊なバインディングを実装したい場合は、genericBinding() を使います。そうすれば、バインディングされたFlowの値の変化をコールバックとして受け取れるので、自由にバインディング的な処理を追加できます。
-
-```kotlin
-            .genericBinding(controls.password, viewModel.showPassword) { pwd, show ->
-                pwd.inputType = if(show==true) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-            }
-```
-
-最後に、authenticatedによって、auth_panelとmain_panel の表示をトグルしています。
-このように、visibilityBinding, enableBinding, checkBinding など、Boolean型の状態プロパティとビューの属性をバインドするメソッドは、
-BoolConvert型の引数（デフォルトはStraight）指定できます。visibility, enable など単方向バインドしか存在しな場合は、
-`viewModel.authenticated.map {!it}` を渡しても同じ効果が得られます。しかし、checkBindingで双方向バインドしたい場合には、この方法は使えません。
- map() が返すのは Flow&lt;Boolean> であって、MutableStateFlowに値を書き戻すことができないからです。このような時、
-`BoolConvert.Inverse` を指定すれば、bool値を反転しつつ双方向にリンクすることが可能です。
-```kotlin
-            .visibilityBinding(controls.authPanel, viewModel.authenticated, BoolConvert.Inverse, VisibilityBinding.HiddenMode.HideByGone)
-            .visibilityBinding(controls.mainPanel, viewModel.authenticated, BoolConvert.Straight, VisibilityBinding.HiddenMode.HideByGone)
-```
-
-## LiteCommand&lt;T> と LiteUnitCommand
-
-LiteCommand&lt;T> は、ハンドラに１個引数を取ります。
-例えば、okボタンとキャンセルボタンに１つのハンドラを登録するような場合に、LiteCommand&lt;Boolean>を使えば、１つのcommandインスタンス＋１つのハンドラで、ok/cancel を処理できます。
-ただ、実際にコードを書いてみると、１イベント１ハンドラで書いた方がスッキリするケース多く、引数を要求したくなるコマンドは、かなりレアです。そのため、`LiteCommand&lt;Unit>` と書くことが多く、その場合、ハンドラは（ラムダで書くときはよいけれど、メンバ関数などを渡すときは）、
-```kotlin
-fun action(@Suppress("UNUSED_PARAMETER")u:Unit) {
-    ...
-}
-``` 
-
-のように書かないといけなくなって面倒でしかたないので、引数なしのコマンドを、LiteUnitCommand として分離しました。引数の有無の違いだけで、考え方は同じなので、以下の説明では、まとめて、LiteCommand と表記しています。また、後述の ReliableCommand も同様に、引数なし版は、ReliableUnitCommand です。
-
-## LiteCommand と ReliableCommand
-
-先の例では、LiteCommand (LiteUnitCommand) を使用しました。
-すべての状態変更がビューモデル内で閉じているので、アクティビティの回転や、アプリがバックグラウンドに隠れて戻ってくるようなケースでも正しく動作します。
-
-ここで、ログインが成功したらメッセージボックスを表示するケースを考えてみましょう。
-さっそく、MainActivity に、メッセージ表示用メソッドを追加します。
-```kotlin
-    private fun onAuthenticated() {
-        AlertDialog.Builder(this) // FragmentではActivityを取得して生成
-            .setTitle("サンプル")
-            .setMessage("ログインしました")
-            .setPositiveButton("OK", { dialog, which ->
-            })
-            .show()
-    }
-```
-
-では、authenticated を監視して、値がtrueになったらメッセージボックスを表示してみます。
-尚、`disposableObserve()`は、Flow に生やした拡張メソッドで、値監視を開始し、監視終了用の `IDisposable` ([android-utilities](https://github.com/toyota-m2k/android-utilities)で定義した.NET/Rx風のi/f) を返します。これを bindier に add() しておくことで、Activityが destroy されるときに、監視を自動的に終了します。
-```kotlin
-    override fun onCreate(savedInstanceState: Bundle?) {
-        ...
-        binder
-            .owner(this)
-                ...（略）
-            .add(viewModel.authenticated.disposableObserve{
-                if(it) {
-                    onAuthenticated()
-                }
-            })
-    }
-```
-
-すでにお気づきかもしれませんが、このコードは期待通りには動きません。いったん認証が成功すると、viewModel.authenticated.value == true になっているので、この状態でデバイスを回転すると、onCreate()で、監視を開始するたびに、onAuthenticated が呼ばれてダイアログが表示されてしまいます。
-
-
-作戦を変更して、`commandOnAuthenticated:LiteUnitCommand`を介して、ハンドラ(onAuthenticated)を呼び出すことにしましょう。AuthenticationViewModel を次のように変更します。
-```kotlin
-class AuthenticationViewModel : ViewModel() {
-        （略）
-    val commandOnAuthenticated = LiteUnitCommand()  // 追加
-    val loginCommand = LiteUnitCommand {
-        // 認証中はビジーフラグを立てる
-        isBusy.value = true
-        // サブスレッドで認証を実行
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                if (MyAuthenticator.tryLogin(userName.value, password.value)) {
-                    // 認証成功
-                    commandOnAuthenticated.invoke()
-                    authenticated.value = true
-                }
-            } finally {
-                isBusy.value = false
-            }
-        }
-    }
-    val logoutCommand = LiteUnitCommand()
-    val authenticated: MutableStateFlow<Boolean> = MutableStateFlow(false) 
-}
-```
-
-さらに、onCreate()で、commandOnAuthenticatedに、ハンドラをバインドしておきます。
-```kotlin
-        binder
-            .owner(this)
-                ...（略）
-            .add(viewModel.commandOnAuthenticated.bind(this@MainActivity::onAuthenticated))
-```
-
-だいたい期待通りに動くようになりましたが、まだうまく動かない場合があります。
-問題は、ビューモデルから、`commandOnAuthenticated.invoke()` が非同期に（サブスレッドから）呼び出されることです。すでに説明した通り、android-binding ライブラリが提供する Binder をはじめとするバインディングの仕掛けは、Activityのライフサイクルに従って動作します。デバイスを回転したとき、Activity#onDestroy が呼ばれ、バインド先のビューがはきされ情報はすべて破棄され、次に onCreate()が呼ばれて、再びバインド処理が実行されるまでの間は、コマンドハンドラが登録されていない状態となります。つまり、onDestroy()から、次の onCreate() までの間に認証が終わってしまうと、commandOnAuthenticated.invoke()は空振りし、その後、onAuthenticated() が呼ばれるチャンスはありません。
-
-このように、サブスレッドで処理を行った後、ActivityやViewを操作するコマンドを実装する場合は、ReliableCommand を使用してください。　
-このプログラムは、AuthenticationViewModel を次のように変更するだけで正しく動作します。
-
-```kotlin
-class AuthenticationViewModel : ViewModel() {
-        （略）
-    val commandOnAuthenticated = ReliableUnitCommand()  // LiteUnitCommand()から変更
-```
-
-ちなみに、ReleableCommand は、トリガーされた状態をハンドラに渡すまで、内部(MutableLiveData)に保持していて、ハンドラをコールしたら、状態をリセットすることで、複数回の呼び出しを回避しています。つまり、flowを監視する方法とコマンドハンドラを使う方法の「いいとこどり」です。ただし、LiteCommand に比べて、オーバーヘッドが大きいので、利用は必要最小限にとどめましょう。また、LiteCommand は、bind() メソッドで、ハンドラをいくつでも登録できるのに対し、ReliableCommand は、ハンドラを１つしか bind() できません（複数回 bind() を実行すると IllegalStateException をスローします）。とはいえ、１つのコマンドに複数のハンドラを登録しなければならない状況はほとんどないので、実用上は問題にならないと思います。
-
-## リファレンス
-
-以下では、各バインディングクラスの使い方を説明します。
-主要なバインディングクラスについては、サンプルプログラムの [CatalogActivity](https://github.com/toyota-m2k/android-binding/blob/main/app/src/main/java/io/github/toyota32k/binder/CatalogActivity.kt) に、利用例を示しました。
-
-### バインディングモード
-
-XAMLのバインディングと同じように（というかマネしたので）、android-binding にも、バインディングモードがあります。
-
-#### BindingMode.OneWay
-
-ViewModel（`Flow` や `LiveDate`）から、ビューのプロパティへの単方向バインディング。<br>
-visibilityBinding, enableBinding, textBinding, progressBarBinding などは、OneWayモードだけをサポートします。
-
-#### BindingMode.TwoWay
-
-ViewModel（`MutableStateFlow` や `MutableLiveData`) と、ビューのプロパティとの双方向バインディング。
-editTextBinding, checkBinding, seekBarBinding などは、TwoWayモードをサポートします。TwoWayモードをサポートするバインディングは、OneWay, OneWayToSourceモードもサポートしており、bindingMode引数で動作を指定できます。
-
-#### BindingMode.OneWayToSource
-
-ビューのプロパティから、ViewModel（`MutableStateFlow` や `MutableLiveData`) への単方向バインディング。<br>
-XAMLのバインディングモードにあったからマネして作ったけれど、TwoWay で代用できるので、ほとんど（まったく？）使ったことがないかも。
-
-### Binder拡張関数とバインディングクラス
-
-visibilityBinding(), textBinding() などは、Binderクラスの拡張関数です。これらは、それぞれ、VisibilityBinding, TextBinding などの`バインディングクラス` を生成してBinderに登録します。
-通常、これらのバインディングクラスを直接作成して扱う必要はありませんが、より柔軟で細かい制御を行いたい場合は、それぞれのクラスを作成して利用することも可能です。
-
-#### Boolean型バインディング
-
-| 拡張関数                   | バインディングクラス       | ビュー                                                 | プロパティ                              | バインディングモード  |
-|------------------------|------------------------|-------------------------------------------------------|------------------------------------|-------------|
-| checkBinding           | CheckBinding           | CompoundButtons (CheckBox, Switch, ToggleButton, ...) | isChecked                          | TwoWay      |
-| enableBinding          | EnableBinding          | View                                                  | isEnabled                          | OneWay      |
-| multiEnableBinding     | MultiEnableBinding     | View(s)                                               | isEnabled                          | OneWay      |
-| visibilityBinding      | VisibilityBinding      | View                                                  | visibility                         | OneWay      |
-| multiVisibilityBinding | MultiVisibilityBinding | View(s)                                               | visibility                         | OneWay      |
-| genericBoolBinding     |GenericBoolBinding|View| (any)                              |OneWay|
-| fadeInOutBinding       | FadeInOutBinding       | View                                                  | visibility with fade in/out effect | OneWay      |
-| multiFadeInOutBinding|MultiFadeInOutBinding   | View(s)   | visibility with fade in/out effect | OneWay|
-| animationBinding       | AnimationBinding       | View                                                  | reversible animation effect        | OneWay      |
-
-- 各Boolean型バインディングは、true/false を反転するかどうかを、`BoolConvert` 型の引数で指定できます。
-- enableBinding, multiEnableBinding は、Float型の `alphaOnDisabled` 引数で、disable時の透過度を指定することができます。アイコンボタンなど、isEnabled = false にしても、自動的に無効表示にならないViewの場合に、簡易的な無効表示を提供すます。
-- visibilityBinding, multiVisibilityBinding, fadeInOutBinding, multiFadeInOutBinding は、HiddenMode 引数により、hidden時のVisibility (View.GONE/View.INVISIBLE) を指定できます。
-
-    
-#### Text型 バインディング
-
-| 拡張関数      | バインディングクラス   | ビュー   | プロパティ | データ型 | バインディングモード  |
-|--------|---------|---------|------------|-----|------|
-|textBinding|TextBinding|View|text|String|OneWay|
-|intBinding|IntBinding|View|text|Int|OneWay|
-|longBinding|LongBinding|View|text|Long|OneWay|
-|floatBinding|FloatBinding|View|text|Float|OneWay|
-|editTextBinding|EditTextBinding|EditText|text|String|TwoWay|
-|editIntBinding|EditIntBinding|EditText|text|Int|TwoWay|
-|editLongBinding|EditLongBinding|EditText|text|Long|TwoWay|
-|editFloatBinding|EditFloatBinding|EditText|text|Float|TwoWay|
-
-- textBinding は、ViewModelの Flow&lt;String>型データを、View（ButtonやTextViewなど）の text プロパティに単方向バインドします。
-- int/long/floatBinding は、それぞれ、Flow&lt;Int>/Flow&lt;Long>/Flow&lt;Float>型データを、String型に変換して、Viewの text プロパティに単方向バインドします。
-- editTextBinding は、ViewModelの MutableStateFlow&lt;String>型データを、EditText の text プロパティと双方向にバインドします。
-- editInt/Long/Float/Binding は、対応する数値型 MutableStateFlow との間で双方向バインドします。
-- デフォルトの実装は、String-数値型の変換に、toString/toIntなどの単純な関数を利用しています。map() や、ConvertLiveData で、FlowやLiveDataを加工して TextBinding または、EditTextBinding に渡すことにより、より高度な文字列の整形が可能になります。
-
-
-#### ProgressBar/SeekBar/Slider のバインディング
-
-| 拡張関数      | バインディングクラス   | ビュー   | プロパティ | データ型 | バインディングモード  |
-|--------|---------|---------|------------|-----|------|
-|progressBarBinding|ProgressBarBinding|ProgressBar|progress|Int|OneWay|
-||||min|Int|OneWay|
-||||max|Int|OneWay|
-|seekBarBinding|SeekBarBinding|SeekBar|value|Int|TwoWay|
-||||min|Int|OneWay|
-||||max|Int|OneWay|
-|sliderBinding|SliderBinding|Slider (Material Components)|value|Float|TwoWay|
-||||valueFrom|Float|OneWay|
-||||valueTo|Float|OneWay|
-
-- `progressBarBinding` は、ViewModelのFlow&lt;Int>型データを、`ProgressBar` の `progress` プロパティに単方向バインドします。必要に応じて、min/max プロパティに対する単方向バインドも設定できます。
-- `seekBarBinding` は、ViewModelのMutableStateFlow&lt;Int>型データを、`SeekBar`の `value` プロパティと双方向バインドします。必要に応じて、`min`/`max` プロパティに対する単方向バインドも設定できます。
-- `sliderBinding` は、ViewModelのMutableStateFlow&lt;Float>型データを、Material Component の `Slider` の `value` プロパティと双方向バインドします。必要に応じて、valueFrom/valueTo プロパティに対する単方向バインドも設定できます。
-
-#### ラジオボタンのバインディング
-
-
-| 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
-|---|---|---|---|---|
-|radioGroupBinding|RadioGroupBinding|RadioGroup|T:Any (IIDValueResolver&lt;T>を使用)|TwoWay|
-|materialRadioButtonGroupBinding|MaterialRadioButtonGroupBinding|MaterialButtonToggleGroup (isSingleSelection=true, isSelectionRequired=true)|T:Any (IIDValueResolver&lt;T>を使用)|TwoWay|
-|materialRadioUnSelectableButtonGroupBinding|MaterialRadioButtonUnSelectableGroupBinding|MaterialButtonToggleGroup (isSingleSelection=true, isSelectionRequired=true)|T:Any (IIDValueResolver&lt;T>を使用)|TwoWay|
-
-- `radioGroupBinding`と`materialRadioButtonGroupBinding`は、それぞれ`RadioGroup` の `checkedRadioButtonId` `プロパティ、MaterialButtonToggleGroup` の `checkedButtonId` プロパティとViewModelが持つ任意のMutableStateFlow&ltT>（通常 T はenum 値）を双方向バインドします。
-- `materialRadioUnSelectableButtonGroupBinding`は、「選択なし」という状態を許容する以外は、materialRadioButtonGroupBinding と同じです。
-- ボタンのID(android:id) と &lt;T>型を相互変換するために、`IIDValueResolver` を実装する必要があります。
-```kotlin
-interface IIDValueResolver<T> {
-    fun id2value(@IdRes id:Int) : T?
-    fun value2id(v:T): Int
-}
-```
-例えば次のような enum class を定義して利用します。
-```kotlin
-enum class RGB(@IdRes val id:Int) {
-    RED(R.id.red_button),
-    GREEN(R.id.green_button),
-    BLUE(R.id.blue_button);
-
-    companion object {
-        fun valueOf(@IdRes id: Int): RGB? {
-            return entries.find { it.id == id }
-        }
-    }
-    object IDResolver:IIDValueResolver<RGB> {
-        override fun id2value(id: Int): RGB? = valueOf(id)
-        override fun value2id(v: RGB): Int = v.id
-    }
-}
-
-...
-class ViewModel {
-    val rgb = MutableStateFlow<RGB?>(null)
-}
-
-...
-binder.materialRadioUnSelectableButtonGroupBinding(buttonToggleGroup, viewModel.rgb, RGB.IDResolver)
-```
-
-#### 複数選択可能なトグルボタングループ（MaterialButtonToggleGroup）のバインディング
-
-
-| 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
-|---|---|---|---|---|
-|materialToggleButtonGroupBinding|MaterialToggleButtonGroupBinding|MaterialButtonToggleGroup|checkedButtonIds|List&lt;T:Any> (using IIDValueResolver&lt;t>)||TwoWay|
-|materialToggleButtonsBinding|MaterialToggleButtonsBinding|MaterialButtonToggleGroup|checkedButtonIds|Boolean(s)|TwoWay|
-
-- `materialToggleButtonGroupBinding` は、`MaterialButtonToggleGroup` の `checkedButtonIds` プロパティを `IIDValueResolver` によって変換された List&lt;T>を、  ViewModel の `MutableStateFlow&lt;List&lt;T>>` にバインドします。
-- `materialToggleButtonsBinding` は、個々のボタン（MaterialButtonToggleGroupの子要素）のチェック状態（MaterialButtonToggleGroupのcheckedButtonIdsから取得）を、ViewModel の MutableStateFlow&lt;Boolean> を１つずつ双方向にバインドします。
-
-
-```kotlin
-class ViewModel {
-    val red = MutableStateFlow<Boolean>(false)
-    val green = MutableStateFlow<Boolean>(false)
-    val blue = MutableStateFlow<Boolean>(false)
-}
-
-binder.materialToggleButtonsBinding(group, BindingMode.TwoWay) {
-    bind(controls.redButton, viewModel.red)
-    bind(controls.greenButton, viewModel.green)
-    bind(controls.blueButton, viewModel.blue)
-}
-
-```
-
-#### RecyclerView のバインディング
-
-| 拡張関数      | バインディングクラス   | ビュー   | データ型 | バインディングモード  |
-|---|---|---|---|---|
-|recyclerViewBinding|RecyclerViewBinding|RecyclerView|ObservableList|TwoWay|
-|recyclerViewGestureBinding|RecyclerViewBinding|RecyclerView|ObservableList|TwoWay|
-
-
-- `RecyclerView` と、その要素リストをバインドするため、要素の変更を監視可能な、MutableList派生クラス `ObservableList`を使用します。
-- recyclerViewBindingは、RecyclerView と ViewModel の ObservableList とを双方向にバインドします。D&Dによるリストの並べ替えもサポートしており、その有効・無効も MutableStateFlow&lt;Boolean>型の変数にバインドして、動的に切り替えることも可能です。
-- recyclerViewGestureBindingは、リスト要素の右スワイプジェスチャーによる要素削除をサポートします。こちらもジェスチャーの有効・無効を MutableStateFlow&lt;Boolean>型の変数にバインドして、動的に切り替えることも可能です。
-- 個々の要素と、それを表示するためのItem View は、引数 `bindView:(Binder, View, T)->Unit)` で接続しますが、その第一引数で RecyclerView の Item View のライフサイクルに合わせて動作するBinderインスタンスが渡されるので、 bindView内で、Item View に対するバインディングを定義できます。
-
-```kotlin
-class ViewModel {
-     val videoSources = ObservableList<MediaSource>()
-     val currentSource = MutableStateFlow<MediaSource?>(null)
-}
-
-...
-val binder = Binder()
-fun onCreate(savedInstanceState:Bundle?) {
-    binder
+binder
     .owner(this)
-    .recyclerViewBinding(model.videoSources, R.layout.list_item_video) { itemBinder, view, item ->
-        itemBinder
-        // タイトル
-        .textBinding(view.findViewById(R.id_textview_title), ConstantLiveData(item.title))
-        // 再生中のアイテムのチェックを on
-        .checkBinding(view.findViewById(R.id_checkbox_current_item), viewModel.currentSource.map { it == item })
-        // アイテムタップで再生開始（playCommandにviewをバインド）
-        .clickBinding(view) { play(item) }
-    }
+```
+
+Set the LifecycleOwner (this@MainActivity) in the Binder. This ensures that the Binder operates according to the lifecycle of MainActivity. That means when the Activity is destroyed, all bindings are automatically released, preventing resource leaks.
+
+```kotlin
+    .editTextBinding(controls.userName, viewModel.userName)
+    .editTextBinding(controls.password, viewModel.password)
+    .checkBinding(controls.showPassword, viewModel.showPassword)
+```
+
+Using the `editTextBinding()` and `checkBinding()` extension functions, bind the text properties of EditText with the string properties (MutableStateFlow&lt;String>) in the ViewModel, and the isChecked property of CheckBox (CompoundButton) with the showPassword property (MutableStateFlow&lt;Boolean>) in the ViewModel, both bidirectionally.
+
+```kotlin
+.enableBinding(controls.loginButton, viewModel.isReady)
+.multiEnableBinding(arrayOf(controls.userName, controls.password, controls.showPassword), viewModel.isBusy, BoolConvert.Inverse)
+```
+
+First, use `enableBinding()` to bind the isReady property to the enabled state (isEnabled) of the login button. Next, use `multiEnableBinding()` to bind the isBusy property to the enabled state of multiple views (username and password EditTexts and the show password CheckBox).
+
+```kotlin
+.bindCommand(viewModel.loginCommand, controls.loginButton)
+.bindCommand(viewModel.logoutCommand, controls.logoutButton, this@MainActivity::onLogout)
+```
+
+Next, bind buttons and actions via the command class instances prepared in the ViewModel. The `loginCommand` is already defined within the ViewModel, so we only need to bind it to the button. The `logoutCommand`, however, doesn't have a defined handler in the ViewModel (for explanation purposes), so we pass the handler (a method in MainActivity) as the third argument to `bindCommand`.
+
+This allows flexible binding of views and actions (handlers) through the command class (`ICommand`/`IUnitCommand`). Also, by consolidating all interactive processing into `Binder#bindCommand`, maintenance becomes easier.
+
+```kotlin
+.genericBinding(controls.password, viewModel.showPassword) { pwd, show ->
+    pwd.inputType = 
+        if (show) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
 }
 ```
 
-#### その他のバインディング
+We want to update the `inputType` property of EditText according to the on/off state of the "Show Password" CheckBox, but there's no dedicated class to bind inputType to a Boolean value. For such special bindings, we use `genericBinding()`. It allows us to receive changes in the bound Flow as a callback and freely add binding processing.
 
-- GenericBinding<br>
-    任意のViewインスタンスと、任意のビューモデル（LiveData / Flow）を、action関数を介してバインドします。例えば、enum値によって背景色を変える、など、特殊なバインドを実現するために使用します。
-- GenericBoolBinding<br>
-    Boolean型に特化した、GenericBindingです。BoolConvert型引数によって、bool値の反転をサポートします。
-- HeadlessBinding<br>
-    ビューを介さず、ビューモデルを action に直接バインドします。内部的には、[DisposableObserve](https://github.com/toyota-m2k/android-utilities/blob/main/libUtils/src/main/java/io/github/toyota32k/utils/DisposableObserver.kt) そのものですが、他のバインディングと同じ流儀にそろえることができます。
-- AlphaBinding<br>
-    ビューの透過度(alphaプロパティ)にビューモデル(Flow&lt;Float>)にバインドします。
-- AnimationBinding / FadeInOutBinding / MultiFadeInOutBinding<br>
-    `AnimationBinding` は、ViewModel の Flow&lt;Boolean>型プロパティを、ビューのアニメーションにバインドします。ただし、このバインディングクラスは、`SequentialAnimation`や`ParallelAnimation`（ともに`IReversibleAnimation` 実装クラス）などを使った、複雑なアニメーションを実現するために用意しました。bool 値による単純なビューの FadeIn/Out には、`FadeInOutBinding` （複数のビューを同時にFadeIn/Outするなら `MultiFadeInOutBinding`）が便利です。
-- ReadOnlyBinding<br>
-    EditText をリードオンリーとするかどうかを、ビューモデル（Flow<Boolean>）にバインドします。余談ですが、Android の EditText は、他のOS (WinやiOS)のそれと違って、isReadOnly プロパティ的なやつが存在しないことに驚きました。
-- ActivityBinding<br>
-    Activity の各種フラグをビューモデルにバインドします。内部的には、`HeadlessBinding` を使って機能を実現しています。
-    - activityStatusBarBinding<br>
-    `StatusBar` 表示状態を、ビューモデル(Flow&lt;Boolean>)にバインドします。
-    - activityActionBarBinding<br>
-    `ActionBar` の表示状態を、ビューモデル(Flow&lt;Boolean>)にバインドします。
-    - activityOrientationBinding<br>
-    Activityの Orientation を、ビューモデル(Flow&lt;[ActivityOrientation](https://github.com/toyota-m2k/android-utilities/blob/cf408fb4aee6e45763f6970ddccdb071b781125b/libUtils/src/main/java/io/github/toyota32k/utils/ActivityExt.kt#L49)>)にバインドします。
-    - activityOptionsBinding<br>
-    上記３つ（StatusBar, ActionBar の表示/非表示、Orientation）をまとめてバインドします。
-    バインドするデータ型は、[ActivityOptions](https://github.com/toyota-m2k/android-utilities/blob/cf408fb4aee6e45763f6970ddccdb071b781125b/libUtils/src/main/java/io/github/toyota32k/utils/ActivityExt.kt#L59) です。
+```kotlin
+.visibilityBinding(controls.authPanel, viewModel.authenticated, BoolConvert.Inverse, VisibilityBinding.HiddenMode.HideByGone)
+.visibilityBinding(controls.mainPanel, viewModel.authenticated, BoolConvert.Straight, VisibilityBinding.HiddenMode.HideByGone)
+```
 
-    
+Finally, we toggle the visibility of `auth_panel` and `main_panel` based on the authenticated property. Methods like `visibilityBinding()`, `enableBinding()`, and `checkBinding()` that bind Boolean state properties can specify a BoolConvert argument (default is Straight) to determine whether to invert the Boolean value. In this case, since it is BindingMode.OneWay, it is equivalent to writing:
+
+```kotlin
+.visibilityBinding(controls.mainPanel, viewModel.authenticated.map { !it }, BoolConvert.Straight, VisibilityBinding.HiddenMode.HideByGone)
+```
+
+However, if using checkBinding, specifying `BoolConvert.Inverse` allows two-way linking while inverting the Boolean value.
+
+## Samples
+
+- [MainActivity](https://github.com/toyota-m2k/android-binding/blob/main/app/src/main/java/io/github/toyota32k/binder/MainActivity.kt)  
+This is the implementation of the authentication screen used in the explanations above.
+
+- [CatalogActivity](https://github.com/toyota-m2k/android-binding/blob/main/app/src/main/java/io/github/toyota32k/binder/CatalogActivity.kt)  
+This shows examples of using the main binding classes.
+
+## Detailed Information
+
+[Reference](Reference.md)

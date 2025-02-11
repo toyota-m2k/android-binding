@@ -159,7 +159,7 @@ class CatalogActivity : AppCompatActivity() {
             .fadeInOutBinding(controls.sampleContainer, viewModel.visibleWithFadeEffect)
             // RecyclerView binding
             .recyclerViewGestureBinding(controls.recyclerView, viewModel.list, R.layout.list_item,
-                gestureParams = RecyclerViewBinding.GestureParams(true,true)) { _, view, item->
+                gestureParams = RecyclerViewBinding.GestureParams(dragToMove = true, swipeToDelete = true)) { _, view, item->
                     // この例は固定値なので binder は使わない
                     view.findViewById<TextView>(R.id.title).text = item.title
                     view.findViewById<TextView>(R.id.sub_title).text = item.time.toString()
