@@ -84,9 +84,9 @@ open class SpinnerBinding<T> (
          * - TextView１つだけのアイテムビュー (android.R.layout.simple_spinner_item)を使用。
          * - item:T のtoString()の結果がTextViewに表示される。
          */
-        fun <T> createSimpleAdapter(list: List<T>):SpinnerAdapter {
+        fun <T> createSimpleAdapter(list: List<T>, itemToString:((T)->String)?):SpinnerAdapter {
             return createAdapter(list, android.R.layout.simple_spinner_item) { binder, view, item ->
-                view.findViewById<TextView>(android.R.id.text1).text = item.toString()
+                view.findViewById<TextView>(android.R.id.text1).text = itemToString?.invoke(item) ?: item.toString()
             }
         }
 
@@ -101,8 +101,12 @@ open class SpinnerBinding<T> (
          * @param adapter Spinnerに表示するアダプタ。省略時はcreateSimpleAdapter()を使用。
          * @param mode BindingMode dataと選択値のバインディングモード
          */
-        fun <T> create(owner: LifecycleOwner, view: Spinner, data: LiveData<T>, list: List<T>, adapter:SpinnerAdapter?=null, mode: BindingMode = BindingMode.TwoWay) : SpinnerBinding<T> {
-            view.adapter = adapter ?: createSimpleAdapter(list)
+        fun <T> create(owner: LifecycleOwner, view: Spinner, data: LiveData<T>, list: List<T>, adapter:SpinnerAdapter, mode: BindingMode = BindingMode.TwoWay) : SpinnerBinding<T> {
+            view.adapter = adapter
+            return SpinnerBinding(data, list, mode).apply { connect(owner,view) }
+        }
+        fun <T> create(owner: LifecycleOwner, view: Spinner, data: LiveData<T>, list: List<T>, itemToString:((T)->String)?=null, mode: BindingMode = BindingMode.TwoWay) : SpinnerBinding<T> {
+            view.adapter = createSimpleAdapter(list, itemToString)
             return SpinnerBinding(data, list, mode).apply { connect(owner,view) }
         }
         /**
@@ -115,8 +119,13 @@ open class SpinnerBinding<T> (
          * @param adapter Spinnerに表示するアダプタ。省略時はcreateSimpleAdapter()を使用。
          * @param mode BindingMode dataと選択値のバインディングモード
          */
-        fun <T> create(owner: LifecycleOwner, view: Spinner, data: Flow<T>, list: List<T>, adapter:SpinnerAdapter?=null, mode: BindingMode = BindingMode.TwoWay) : SpinnerBinding<T> {
-            view.adapter = adapter ?: createSimpleAdapter(list)
+        fun <T> create(owner: LifecycleOwner, view: Spinner, data: Flow<T>, list: List<T>, adapter:SpinnerAdapter, mode: BindingMode = BindingMode.TwoWay) : SpinnerBinding<T> {
+            view.adapter = adapter
+            val flow = if(data is MutableStateFlow) data.asMutableLiveData(owner) else data.asLiveData()
+            return SpinnerBinding(flow, list, mode).apply { connect(owner,view) }
+        }
+        fun <T> create(owner: LifecycleOwner, view: Spinner, data: Flow<T>, list: List<T>, itemToString:((T)->String)?=null, mode: BindingMode = BindingMode.TwoWay) : SpinnerBinding<T> {
+            view.adapter = createSimpleAdapter(list, itemToString)
             val flow = if(data is MutableStateFlow) data.asMutableLiveData(owner) else data.asLiveData()
             return SpinnerBinding(flow, list, mode).apply { connect(owner,view) }
         }
@@ -128,12 +137,17 @@ open class SpinnerBinding<T> (
 //  createSimpleAdapterを使うなら、adapter引数は省略可能。
 //  カスタマイズする場合は、SpinnerBinding.createAdapter()を使う。
 
-fun <T> Binder.spinnerBinding(owner: LifecycleOwner, view: Spinner, data: MutableLiveData<T>, list: List<T>, adapter:SpinnerAdapter?=null) : Binder
+fun <T> Binder.spinnerBinding(owner: LifecycleOwner, view: Spinner, data: MutableLiveData<T>, list: List<T>, adapter:SpinnerAdapter) : Binder
     = add(SpinnerBinding.create(owner, view, data, list, adapter))
-fun <T> Binder.spinnerBinding(view: Spinner, data: MutableLiveData<T>, list: List<T>, adapter:SpinnerAdapter?=null) : Binder
+fun <T> Binder.spinnerBinding(view: Spinner, data: MutableLiveData<T>, list: List<T>, adapter:SpinnerAdapter) : Binder
     = add(SpinnerBinding.create(requireOwner, view, data, list, adapter))
 
-fun <T> Binder.spinnerBinding(owner: LifecycleOwner, view: Spinner, data: MutableStateFlow<T>, list: List<T>, adapter:SpinnerAdapter?=null) : Binder
-    = add(SpinnerBinding.create(owner, view, data, list, adapter))
-fun <T> Binder.spinnerBinding(view: Spinner, data: MutableStateFlow<T>, list: List<T>, adapter:SpinnerAdapter?=null) : Binder
-    = add(SpinnerBinding.create(requireOwner, view, data, list, adapter))
+fun <T> Binder.spinnerBinding(owner: LifecycleOwner, view: Spinner, data: MutableStateFlow<T>, list: List<T>, itemToString:((T)->String)?=null) : Binder
+    = add(SpinnerBinding.create(owner, view, data, list, itemToString))
+fun <T> Binder.spinnerBinding(view: Spinner, data: MutableStateFlow<T>, list: List<T>, itemToString:((T)->String)?=null) : Binder
+    = add(SpinnerBinding.create(requireOwner, view, data, list, itemToString))
+
+fun <T> Binder.spinnerBinding(owner: LifecycleOwner, view: Spinner, data: MutableLiveData<T>, list: List<T>, itemToString:((T)->String)?=null) : Binder
+        = add(SpinnerBinding.create(owner, view, data, list, itemToString))
+fun <T> Binder.spinnerBinding(view: Spinner, data: MutableLiveData<T>, list: List<T>, itemToString:((T)->String)?=null) : Binder
+        = add(SpinnerBinding.create(requireOwner, view, data, list, itemToString))
