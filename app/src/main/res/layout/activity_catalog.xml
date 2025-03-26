@@ -375,6 +375,7 @@
                 android:layout_height="wrap_content"
                 android:inputType="none"
                 android:focusable="false"
+                android:saveEnabled="false"
                 />
         </com.google.android.material.textfield.TextInputLayout>
         <View

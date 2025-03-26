@@ -39,7 +39,8 @@ open class ExposedDropdownMenuBinding<T>(
     fun connect(owner: LifecycleOwner, view: AutoCompleteTextView, fn:(ILabelResolverCreator<T>.()->Unit)?=null) {
         super.connect(owner,view)
         fn?.invoke(this)
-        adapter = ArrayAdapter<String>(view.context, android.R.layout.simple_list_item_1, list.map(itemToLabel))
+        view.isSaveEnabled = false  // restoreInstanceStateによる復元を無効化 ... こうしておかないと、回転すると adapter の設定が消えてしまう
+        adapter = ArrayAdapter<String>(view.context, com.google.android.material.R.layout.support_simple_spinner_dropdown_item, list.map(itemToLabel))
         view.setAdapter(adapter)
 
         if(mode!= BindingMode.OneWay) {

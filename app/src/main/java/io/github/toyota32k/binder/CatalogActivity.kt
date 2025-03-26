@@ -2,7 +2,6 @@ package io.github.toyota32k.binder
 
 import android.graphics.Color
 import android.os.Bundle
-import android.provider.CalendarContract.Colors
 import android.view.View
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
