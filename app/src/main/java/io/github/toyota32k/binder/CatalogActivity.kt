@@ -1,6 +1,8 @@
 package io.github.toyota32k.binder
 
+import android.graphics.Color
 import android.os.Bundle
+import android.provider.CalendarContract.Colors
 import android.view.View
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -26,7 +28,7 @@ class CatalogActivity : AppCompatActivity() {
         val inputText = MutableStateFlow("")
         val inputNumber = MutableStateFlow<Float>(0f)
 
-        enum class RadioSampleValue(@IdRes val id:Int, @IdRes val materialId:Int) {
+        enum class RadioSampleValue(@IdRes val id: Int, @IdRes val materialId: Int) {
             Radio1(R.id.radio1, R.id.mtRadio1),
             Radio2(R.id.radio2, R.id.mtRadio2),
             Radio3(R.id.radio3, R.id.mtRadio3);
@@ -35,22 +37,26 @@ class CatalogActivity : AppCompatActivity() {
                 fun valueOf(@IdRes id: Int): RadioSampleValue? {
                     return entries.find { it.id == id }
                 }
+
                 fun materialValueOf(@IdRes id: Int): RadioSampleValue? {
                     return entries.find { it.materialId == id }
                 }
             }
-            object IDResolver:IIDValueResolver<RadioSampleValue> {
+
+            object IDResolver : IIDValueResolver<RadioSampleValue> {
                 override fun id2value(id: Int): RadioSampleValue? = valueOf(id)
                 override fun value2id(v: RadioSampleValue): Int = v.id
             }
-            object MaterialIDResolver:IIDValueResolver<RadioSampleValue> {
+
+            object MaterialIDResolver : IIDValueResolver<RadioSampleValue> {
                 override fun id2value(id: Int): RadioSampleValue? = materialValueOf(id)
                 override fun value2id(v: RadioSampleValue): Int = v.materialId
             }
         }
+
         val radioSample = MutableStateFlow(RadioSampleValue.Radio1)
 
-        enum class ToggleSampleValue(@IdRes val id:Int) {
+        enum class ToggleSampleValue(@IdRes val id: Int) {
             Toggle1(R.id.toggle1),
             Toggle2(R.id.toggle2),
             Toggle3(R.id.toggle3);
@@ -66,6 +72,7 @@ class CatalogActivity : AppCompatActivity() {
                 override fun value2id(v: ToggleSampleValue): Int = v.id
             }
         }
+
         val toggleValue = MutableLiveData<List<ToggleSampleValue>>()
 
 
@@ -76,14 +83,15 @@ class CatalogActivity : AppCompatActivity() {
             visibleWithFadeEffect.value = !visibleWithFadeEffect.value
         }
 
-        class ListItem(val title:String, val time: Date=Date()) {
+        class ListItem(val title: String, val time: Date = Date()) {
             companion object {
                 var nextId = 0
-                fun create():ListItem {
+                fun create(): ListItem {
                     return ListItem("Item-${++nextId}")
                 }
             }
         }
+
         val list = ObservableList<ListItem>()
         val addCommand = LiteUnitCommand {
             list.add(ListItem.create())
@@ -92,10 +100,11 @@ class CatalogActivity : AppCompatActivity() {
         val showActionBar = MutableStateFlow(true)
         val showStatusBar = MutableStateFlow(true)
 
-        enum class Orientation(@IdRes val id:Int) {
+        enum class Orientation(@IdRes val id: Int) {
             Auto(View.NO_ID),
             Portrait(R.id.radio_portrait),
             Landscape(R.id.radio_landscape);
+
             companion object {
                 fun valueOf(@IdRes id: Int): Orientation? {
                     return Orientation.entries.find { it.id == id }
@@ -110,13 +119,26 @@ class CatalogActivity : AppCompatActivity() {
 
         val orientation = MutableStateFlow<Orientation>(Orientation.Auto)
         val activityOrientation = orientation.map {
-                when(it) {
-                    Orientation.Portrait -> ActivityOrientation.PORTRAIT
-                    Orientation.Landscape -> ActivityOrientation.LANDSCAPE
-                    else -> ActivityOrientation.AUTO
-                }
+            when (it) {
+                Orientation.Portrait -> ActivityOrientation.PORTRAIT
+                Orientation.Landscape -> ActivityOrientation.LANDSCAPE
+                else -> ActivityOrientation.AUTO
             }
         }
+
+        enum class ColorList(val color: Int) {
+            RED(Color.RED),
+            GREEN(Color.GREEN),
+            BLUE(Color.BLUE),
+            YELLOW(Color.YELLOW),
+            CYAN(Color.CYAN),
+            MAGENTA(Color.MAGENTA),
+            BLACK(Color.BLACK),
+            WHITE(Color.WHITE)
+        }
+
+        val colorSelection = MutableStateFlow(ColorList.RED)
+    }
 
 
     private lateinit var controls: ActivityCatalogBinding
@@ -164,6 +186,7 @@ class CatalogActivity : AppCompatActivity() {
                     view.findViewById<TextView>(R.id.title).text = item.title
                     view.findViewById<TextView>(R.id.sub_title).text = item.time.toString()
                 }
+            .exposedDropdownMenuBinding(controls.filledExposedDropdown, viewModel.colorSelection, CatalogViewModel.ColorList.entries)
             .bindCommand(viewModel.addCommand, controls.addListItemButton)
             // Activity binding
             .checkBinding(controls.checkBoxActionBar, viewModel.showActionBar)
@@ -172,5 +195,8 @@ class CatalogActivity : AppCompatActivity() {
             .activityStatusBarBinding(viewModel.showStatusBar)
             .materialRadioUnSelectableButtonGroupBinding(controls.orientationGroup, viewModel.orientation, CatalogViewModel.Orientation.IDResolver)
             .activityOrientationBinding(this, viewModel.activityOrientation)
+            .observe(viewModel.colorSelection) {
+                controls.colorDemoView.setBackgroundColor(it.color)
+            }
     }
 }

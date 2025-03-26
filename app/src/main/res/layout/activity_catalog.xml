@@ -359,6 +359,29 @@
                 style="?attr/materialButtonOutlinedStyle"
                 />
         </com.google.android.material.button.MaterialButtonToggleGroup>
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/filled_exposed_dropdown_container"
+            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="State"
+            >
+
+            <AutoCompleteTextView
+                android:id="@+id/filled_exposed_dropdown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:focusable="false"
+                />
+        </com.google.android.material.textfield.TextInputLayout>
+        <View
+            android:id="@+id/color_demo_view"
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            />
     </LinearLayout>
 
 
