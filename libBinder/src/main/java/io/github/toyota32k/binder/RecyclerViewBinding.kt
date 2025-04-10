@@ -15,7 +15,7 @@ import io.github.toyota32k.binder.list.RecyclerViewAdapter
 import io.github.toyota32k.utils.IDisposable
 import kotlinx.coroutines.flow.Flow
 
-class RecyclerViewBinding<T>(
+class RecyclerViewBinding<T> private constructor(
     val list: ObservableList<T>,
     val view: RecyclerView
 //        private val itemViewLayoutId:Int,
