@@ -7,20 +7,16 @@ import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.asLiveData
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
-import com.google.android.material.snackbar.BaseTransientBottomBar.*
-import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.snackbar.*
 import io.github.toyota32k.binder.list.IRecyclerViewInsertEventSource
 import io.github.toyota32k.binder.list.ObservableList
 import io.github.toyota32k.binder.list.RecyclerViewAdapter
 import io.github.toyota32k.utils.ConstantLiveData
-import io.github.toyota32k.utils.Disposer
 import io.github.toyota32k.utils.IDisposable
 import io.github.toyota32k.utils.disposableObserve
 import kotlinx.coroutines.flow.Flow
@@ -28,22 +24,19 @@ import kotlinx.coroutines.flow.Flow
 class RecyclerViewBinding<T> private constructor(
     val list: ObservableList<T>,
     val view: RecyclerView
-//        private val itemViewLayoutId:Int,
-//        private val bindView:(Binder, View, T)->Unit
 ) : IBinding {
 
     override val mode: BindingMode = BindingMode.OneWay
-//    var adapter: Disposable? = null
 
-
-//    fun connect(owner:LifecycleOwner, view:RecyclerView) {
-//        view.adapter = RecyclerViewAdapter.Simple(owner,list,itemViewLayoutId,bindView)
-//    }
+    private var gestureDisposable: IDisposable? = null
+    private var dragAndDropDisposable: IDisposable? = null
+    private var autoScrollDisposable: IDisposable? = null
 
     override fun dispose() {
-        // enableDragAndDrop(false)
-        dragAndDropHelper?.attachToRecyclerView(null)
         itemTouchHelper?.attachToRecyclerView(null)
+        gestureDisposable?.dispose()
+        dragAndDropDisposable?.dispose()
+        autoScrollDisposable?.dispose()
 //        list.dispose()    adapter の リスナーは、adapter.dispose()でクリアされるので、これは不要。むしろ、Binder以外でaddされたリスナーも解除されてしまうのでダメぜったい
         (view.adapter as? IDisposable)?.dispose()
     }
@@ -73,7 +66,6 @@ class RecyclerViewBinding<T> private constructor(
         val swipeToDelete:Boolean,              // スワイプによるアイテム削除をサポートするか？
         val deletionHandler:((T)-> IDeletion)? = null
     )
-
     fun enableGesture(params: GestureParams<T>?) {
         if(params==null) {
             itemTouchHelper?.attachToRecyclerView(null)
@@ -83,9 +75,6 @@ class RecyclerViewBinding<T> private constructor(
         enableGesture(params.dragToMove, params.swipeToDelete, params.deletionHandler)
     }
     fun enableGesture(dragToMove:Boolean, swipeToDelete:Boolean, deletionHandler:((T)-> IDeletion)?) {
-        if(dragAndDropHelper!=null) {
-            throw IllegalStateException("drag and drop enabled already.")
-        }
         itemTouchHelper?.attachToRecyclerView(null)
         itemTouchHelper = null
         if(dragToMove||swipeToDelete) {
@@ -118,7 +107,7 @@ class RecyclerViewBinding<T> private constructor(
                             undo = true
                             list.add(pos, item)
                             deletion.rollback()     // リストは自動的に更新されるから、通常はなにもしなくてok、リスト選択を戻すならこのタイミングでやる。
-                        }.addCallback(object: BaseCallback<Snackbar>() {
+                        }.addCallback(object: BaseTransientBottomBar.BaseCallback<Snackbar>() {
                             override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
                                 if(!undo) {
                                     // Undo用 Snackbarが消えた時点で undo されていなければ呼びだし元に通知
@@ -133,33 +122,40 @@ class RecyclerViewBinding<T> private constructor(
             }).apply { attachToRecyclerView(view) }
         }
     }
-
-
-    private var dragAndDropHelper: ItemTouchHelper? = null
-    fun enableDragAndDrop(sw:Boolean) {
-        if(itemTouchHelper!=null) {
-            throw IllegalStateException("gesture enabled already.")
-        }
-        if(sw) {
-            if(dragAndDropHelper==null) {
-                dragAndDropHelper = ItemTouchHelper(object:ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
-                    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-                        val from = viewHolder.bindingAdapterPosition
-                        val to = target.bindingAdapterPosition
-                        list.move(from, to)
-                        return true
-                    }
-
-                    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                    }
-                }).apply { attachToRecyclerView(view) }
-            }
-        } else {
-            dragAndDropHelper?.attachToRecyclerView(null)
-            dragAndDropHelper = null
-        }
+    fun enableGesture(owner: LifecycleOwner, params:LiveData<GestureParams<T>?>) {
+        gestureDisposable?.dispose()
+        gestureDisposable = params.disposableObserve(owner) { enableGesture(it) }
     }
 
+//    private var dragAndDropHelper: ItemTouchHelper? = null
+    fun enableDragAndDrop(sw:Boolean) {
+        enableGesture(dragToMove = sw, swipeToDelete = false, deletionHandler = null)
+//        if(itemTouchHelper!=null) {
+//            throw IllegalStateException("gesture enabled already.")
+//        }
+//        if(sw) {
+//            if(dragAndDropHelper==null) {
+//                dragAndDropHelper = ItemTouchHelper(object:ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0) {
+//                    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+//                        val from = viewHolder.bindingAdapterPosition
+//                        val to = target.bindingAdapterPosition
+//                        list.move(from, to)
+//                        return true
+//                    }
+//
+//                    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+//                    }
+//                }).apply { attachToRecyclerView(view) }
+//            }
+//        } else {
+//            dragAndDropHelper?.attachToRecyclerView(null)
+//            dragAndDropHelper = null
+//        }
+    }
+    fun enableDragAndDrop(owner: LifecycleOwner, sw:LiveData<Boolean>) {
+        dragAndDropDisposable?.dispose()
+        dragAndDropDisposable = sw.disposableObserve(owner) { enableDragAndDrop(it) }
+    }
     /**
      * 自動スクロールのモード
      */
@@ -168,7 +164,6 @@ class RecyclerViewBinding<T> private constructor(
         ALL,        // アイテムが挿入されたら常にスクロール
         ONLY_TAIL,  // リストの末尾に挿入された場合にのみスクロールする
     }
-
     /**
      * アイテムが挿入されたときに、そのアイテムが画面内に表示されるようにスクロールするかどうかの指定
      */
@@ -183,6 +178,10 @@ class RecyclerViewBinding<T> private constructor(
         } else {
             src.insertedEventListener = null
         }
+    }
+    fun enableAutoScroll(owner: LifecycleOwner, sw:LiveData<AutoScrollMode>) {
+        autoScrollDisposable?.dispose()
+        autoScrollDisposable = sw.disposableObserve(owner) { enableAutoScroll(it) }
     }
 
 //    override fun isDisposed(): Boolean {
@@ -200,11 +199,11 @@ class RecyclerViewBinding<T> private constructor(
                 view.adapter = RecyclerViewAdapter.SimpleAdapter(owner,list,itemViewLayoutId,bindView)
             }
         }
-        fun <T,B:androidx.viewbinding.ViewBinding> create(owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>,
-                         fixedSize:Boolean = true,
-                         layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-                         inflate: (parent:ViewGroup)->B,
-                         bindView:(B, Binder, View, T)->Unit) : RecyclerViewBinding<T> {
+        fun <T,B: ViewBinding> create(owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>,
+                                      fixedSize:Boolean = true,
+                                      layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+                                      inflate: (parent:ViewGroup)->B,
+                                      bindView:(B, Binder, View, T)->Unit) : RecyclerViewBinding<T> {
             return RecyclerViewBinding(list,view).apply {
                 view.setHasFixedSize(fixedSize)
                 view.layoutManager = layoutManager
@@ -250,16 +249,16 @@ class RecyclerViewBinding<T> private constructor(
         fun gestureParams(d:Flow<GestureParams<T>?>) = apply { mGestureParamsLiveData = d.asLiveData() }
         fun autoScroll(mode: AutoScrollMode) = apply { mAutoScroll = mode }
 
-        protected fun createExtensions(binder:Binder, bindings:RecyclerViewBinding<T>) {
+        protected fun applyExtensions(bindings:RecyclerViewBinding<T>) {
             val gestureParams = mGestureParams
             val gestureParamsLiveData = mGestureParamsLiveData
             val dragAndDropLiveData = mDragAndDropLiveData
             if(gestureParamsLiveData!=null) {
-                binder.headlessBinding(owner, gestureParamsLiveData) { bindings.enableGesture(it) }
+                bindings.enableGesture(owner, gestureParamsLiveData)
             } else if(gestureParams!=null) {
                 bindings.enableGesture(gestureParams)
             } else if(dragAndDropLiveData!=null) {
-                binder.headlessBinding(owner, dragAndDropLiveData) { bindings.enableDragAndDrop(it==true) }
+                bindings.enableDragAndDrop(owner, dragAndDropLiveData)
             } else if(mDragAndDrop) {
                 bindings.enableDragAndDrop(true)
             }
@@ -269,8 +268,8 @@ class RecyclerViewBinding<T> private constructor(
         abstract fun build(binder:Binder)
     }
     class SimpleBuilder<T>(owner: LifecycleOwner, view:RecyclerView):BuilderBase<T>(owner,view) {
-        protected var mItemLayoutId:Int = -1
-        protected var mBindView:((Binder, View, T)->Unit)? = null
+        private var mItemLayoutId:Int = -1
+        private var mBindView:((Binder, View, T)->Unit)? = null
 
         fun itemLayoutId(@LayoutRes id:Int) = apply { mItemLayoutId = id }
         fun bindView(b:(Binder, View, T)->Unit) = apply { mBindView = b }
@@ -280,6 +279,10 @@ class RecyclerViewBinding<T> private constructor(
             val readonlyList = mReadOnlyListLiveData
             val bindView = mBindView ?: throw IllegalStateException("bindView is not set.")
             binder + if(observableList!=null) {
+                if (readonlyList!=null) {
+                    throw IllegalStateException("list and readonlyList are both set.")
+                }
+                @Suppress("RemoveRedundantQualifierName")
                 RecyclerViewBinding.create(
                     owner,
                     view,
@@ -289,7 +292,7 @@ class RecyclerViewBinding<T> private constructor(
                     mLayoutManager ?: LinearLayoutManager(view.context),
                     bindView
                 ).apply {
-                    createExtensions(binder, this)
+                    applyExtensions(this)
                 }
             } else if(readonlyList!=null) {
                 RecyclerViewReadOnlyBinding.create(
@@ -316,6 +319,7 @@ class RecyclerViewBinding<T> private constructor(
             val inflate = mInflate ?: throw IllegalStateException("inflate is not set.")
             val bindView = mBindView ?: throw IllegalStateException("bindView is not set.")
             if(observableList!=null) {
+                @Suppress("RemoveRedundantQualifierName")
                 RecyclerViewBinding.create(
                     owner,
                     view,
@@ -325,7 +329,7 @@ class RecyclerViewBinding<T> private constructor(
                     inflate,
                     bindView
                 ).apply {
-                    createExtensions(binder, this)
+                    applyExtensions(this)
                 }
             } else if(readonlyList!=null) {
                 RecyclerViewReadOnlyBinding.create(
@@ -360,264 +364,264 @@ fun <T, B:ViewBinding> Binder.recyclerViewBindingEx(owner:LifecycleOwner, view:R
 fun <T, B:ViewBinding> Binder.recyclerViewBindingEx(view:RecyclerView, fn:RecyclerViewBinding.ViewBindingBuilder<T,B>.()->Unit) : Binder =
     recyclerViewBindingEx(requireOwner, view, fn)
 
-// region Owner 引数ありコーナー
-
-/**
- * D&D / Gesture サポートなし
- */
-fun <T> Binder.recyclerViewBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    bindView:(Binder, View, T)->Unit): Binder
-        = add(
-    RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    )
-)
-
-/**
- * D&D サポート指定あり
- */
-fun <T> Binder.recyclerViewBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragAndDrop:Boolean,
-    bindView:(Binder, View, T)->Unit): Binder
-        = add(
-    RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    ).apply { enableDragAndDrop(dragAndDrop) })
-
-
-/**
- * D&D の動的サポート(LiveData版）
- */
-fun <T> Binder.recyclerViewBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragAndDrop: LiveData<Boolean>,
-    bindView:(Binder, View, T)->Unit): Binder {
-    val b = RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    )
-    return genericBoolBinding(owner, view, dragAndDrop) {_,dd-> b.enableDragAndDrop(dd) }
-         .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
-}
-
-/**
- * D&D の動的サポート(Flow版）
- */
-fun <T> Binder.recyclerViewBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragAndDrop: Flow<Boolean>,
-    bindView:(Binder, View, T)->Unit): Binder {
-    val b = RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    )
-    return genericBoolBinding(owner, view, dragAndDrop) { _,dd-> b.enableDragAndDrop(dd) }
-        .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
-}
-
-/**
- * Gesture の静的サポート（ばらばらに指定する版）
- *
- * recyclerViewBinding --> recyclerViewGestureBinding ...
- * JVMのやつが、dragAndDrop:LiveData<Boolean> と gestureParams: LiveData<RecyclerViewBinding.GestureParams<T>?> を区別できないから名前を変えねばならなかった。
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragToMove:Boolean, swipeToDelete:Boolean, deletionHandler:((T)-> RecyclerViewBinding.IDeletion)?,
-    bindView:(Binder, View, T)->Unit): Binder
-        = add(
-    RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    ).apply { enableGesture(dragToMove,swipeToDelete,deletionHandler) })
-
-/**
- * Gesture の静的サポート (GestureParamsで指定する版）
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    gestureParams: RecyclerViewBinding.GestureParams<T>?,
-    bindView:(Binder, View, T)->Unit): Binder
-        = add(
-    RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    ).apply { enableGesture(gestureParams) })
-/**
- * Gesture の動的サポート(LiveData版）
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    gestureParams: LiveData<RecyclerViewBinding.GestureParams<T>?>,
-    bindView:(Binder, View, T)->Unit): Binder {
-    val b = RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    )
-    return genericBinding(owner, view, gestureParams) {_,p-> b.enableGesture(p) }
-        .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
-}
-/**
- * Gesture の動的サポート(Flow版）
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    gestureParams: Flow<RecyclerViewBinding.GestureParams<T>?>,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    bindView:(Binder, View, T)->Unit): Binder {
-    val b = RecyclerViewBinding.create(
-        owner,
-        view,
-        list,
-        itemViewLayoutId,
-        fixedSize,
-        layoutManager,
-        bindView
-    )
-    return genericBinding(owner, view, gestureParams) {_,p-> b.enableGesture(p) }
-        .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
-}
-
-// endregion
-
-// region Owner 引数なしコーナー
-
-/**
- * D&Dサポートなし
- */
-fun <T> Binder.recyclerViewBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
-/**
- * D&D サポート指定あり
- */
-fun <T> Binder.recyclerViewBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragAndDrop:Boolean,
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragAndDrop,bindView)
-
-/**
- * D&D の動的サポート(LiveData版）
- */
-fun <T> Binder.recyclerViewBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragAndDrop: LiveData<Boolean>,
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragAndDrop,bindView)
-
-/**
- * D&D の動的サポート(Flow版）
- */
-fun <T> Binder.recyclerViewBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragAndDrop: Flow<Boolean>,
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragAndDrop, bindView)
-
-/**
- * Gesture の静的サポート（ばらばらに指定する版）
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    dragToMove:Boolean, swipeToDelete:Boolean, deletionHandler:((T)-> RecyclerViewBinding.IDeletion)?,
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragToMove, swipeToDelete, deletionHandler,bindView)
-
-/**
- * Gesture の静的サポート
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    gestureParams: RecyclerViewBinding.GestureParams<T>?,
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,gestureParams,bindView)
-/**
- * Gesture の動的サポート(LiveData版）
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    gestureParams: LiveData<RecyclerViewBinding.GestureParams<T>?>,
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,gestureParams,bindView)
-/**
- * Gesture の動的サポート(Flow版）
- */
-fun <T> Binder.recyclerViewGestureBinding(
-    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
-    fixedSize:Boolean = true,
-    gestureParams: Flow<RecyclerViewBinding.GestureParams<T>?>,
-    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
-    bindView:(Binder, View, T)->Unit): Binder
-        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,gestureParams,layoutManager,bindView)
-
-// endregion
+//// region Owner 引数ありコーナー
+//
+///**
+// * D&D / Gesture サポートなし
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = add(
+//    RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    )
+//)
+//
+///**
+// * D&D サポート指定あり
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragAndDrop:Boolean,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = add(
+//    RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    ).apply { enableDragAndDrop(dragAndDrop) })
+//
+//
+///**
+// * D&D の動的サポート(LiveData版）
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragAndDrop: LiveData<Boolean>,
+//    bindView:(Binder, View, T)->Unit): Binder {
+//    val b = RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    )
+//    return genericBoolBinding(owner, view, dragAndDrop) {_,dd-> b.enableDragAndDrop(dd) }
+//         .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
+//}
+//
+///**
+// * D&D の動的サポート(Flow版）
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragAndDrop: Flow<Boolean>,
+//    bindView:(Binder, View, T)->Unit): Binder {
+//    val b = RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    )
+//    return genericBoolBinding(owner, view, dragAndDrop) { _,dd-> b.enableDragAndDrop(dd) }
+//        .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
+//}
+//
+///**
+// * Gesture の静的サポート（ばらばらに指定する版）
+// *
+// * recyclerViewBinding --> recyclerViewGestureBinding ...
+// * JVMのやつが、dragAndDrop:LiveData<Boolean> と gestureParams: LiveData<RecyclerViewBinding.GestureParams<T>?> を区別できないから名前を変えねばならなかった。
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragToMove:Boolean, swipeToDelete:Boolean, deletionHandler:((T)-> RecyclerViewBinding.IDeletion)?,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = add(
+//    RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    ).apply { enableGesture(dragToMove,swipeToDelete,deletionHandler) })
+//
+///**
+// * Gesture の静的サポート (GestureParamsで指定する版）
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    gestureParams: RecyclerViewBinding.GestureParams<T>?,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = add(
+//    RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    ).apply { enableGesture(gestureParams) })
+///**
+// * Gesture の動的サポート(LiveData版）
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    gestureParams: LiveData<RecyclerViewBinding.GestureParams<T>?>,
+//    bindView:(Binder, View, T)->Unit): Binder {
+//    val b = RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    )
+//    return genericBinding(owner, view, gestureParams) {_,p-> b.enableGesture(p) }
+//        .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
+//}
+///**
+// * Gesture の動的サポート(Flow版）
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    gestureParams: Flow<RecyclerViewBinding.GestureParams<T>?>,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    bindView:(Binder, View, T)->Unit): Binder {
+//    val b = RecyclerViewBinding.create(
+//        owner,
+//        view,
+//        list,
+//        itemViewLayoutId,
+//        fixedSize,
+//        layoutManager,
+//        bindView
+//    )
+//    return genericBinding(owner, view, gestureParams) {_,p-> b.enableGesture(p) }
+//        .recyclerViewBinding(owner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
+//}
+//
+//// endregion
+//
+//// region Owner 引数なしコーナー
+//
+///**
+// * D&Dサポートなし
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,bindView)
+///**
+// * D&D サポート指定あり
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragAndDrop:Boolean,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragAndDrop,bindView)
+//
+///**
+// * D&D の動的サポート(LiveData版）
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragAndDrop: LiveData<Boolean>,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragAndDrop,bindView)
+//
+///**
+// * D&D の動的サポート(Flow版）
+// */
+//fun <T> Binder.recyclerViewBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragAndDrop: Flow<Boolean>,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragAndDrop, bindView)
+//
+///**
+// * Gesture の静的サポート（ばらばらに指定する版）
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    dragToMove:Boolean, swipeToDelete:Boolean, deletionHandler:((T)-> RecyclerViewBinding.IDeletion)?,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,dragToMove, swipeToDelete, deletionHandler,bindView)
+//
+///**
+// * Gesture の静的サポート
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    gestureParams: RecyclerViewBinding.GestureParams<T>?,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,gestureParams,bindView)
+///**
+// * Gesture の動的サポート(LiveData版）
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    gestureParams: LiveData<RecyclerViewBinding.GestureParams<T>?>,
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,layoutManager,gestureParams,bindView)
+///**
+// * Gesture の動的サポート(Flow版）
+// */
+//fun <T> Binder.recyclerViewGestureBinding(
+//    view: RecyclerView, list: ObservableList<T>, itemViewLayoutId:Int,
+//    fixedSize:Boolean = true,
+//    gestureParams: Flow<RecyclerViewBinding.GestureParams<T>?>,
+//    layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+//    bindView:(Binder, View, T)->Unit): Binder
+//        = recyclerViewGestureBinding(requireOwner,view,list,itemViewLayoutId,fixedSize,gestureParams,layoutManager,bindView)
+//
+//// endregion
