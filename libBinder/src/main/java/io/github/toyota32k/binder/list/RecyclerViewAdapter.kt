@@ -79,12 +79,15 @@ class RecyclerViewAdapter {
         // endregion
     }
 
-    class Simple<T>(
+    /**
+     * ViewのレイアウトIDを渡しておけば自動的にビューが生成される最もシンプルなアダプター実装クラス
+     */
+    class SimpleAdapter<T>(
         owner:LifecycleOwner,
         list: ObservableList<T>,
         @LayoutRes private val itemViewLayoutId:Int,
         val bindView: (binder: Binder, view: View, item:T)->Unit
-    ) : Base<T, Simple.SimpleViewHolder>(owner,list) {
+    ) : Base<T, SimpleAdapter.SimpleViewHolder>(owner,list) {
         class SimpleViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
             val binder = Binder()
         }
@@ -100,36 +103,27 @@ class RecyclerViewAdapter {
         }
     }
 
-//    open class HeightWrapContent<T>(owner: LifecycleOwner, list:ObservableList<T>, @LayoutRes itemViewLayoutId: Int, recyclerView: RecyclerView, bindView: (binder: Binder, view: View, item:T)->Unit)
-//        : Simple<T>(owner,list,itemViewLayoutId,bindView) {
-//        private val recyclerViewRef: WeakReference<RecyclerView> = WeakReference(recyclerView)
-//
-//        override fun onListChanged(t: ObservableList.MutationEventData?) {
-//            if (t == null) return
-//            recyclerViewRef?.get()?.also { recyclerView ->
-//                recyclerView.adapter = null
-//                recyclerView.adapter = this
-//                notifyDataSetChanged()
-//            }
-//        }
-//
-//    }
+    /**
+     * ViewBinding を利用するアダプター実装クラス
+     */
+    class ViewBindingAdapter<T,B:androidx.viewbinding.ViewBinding>(
+        owner:LifecycleOwner,
+        list: ObservableList<T>,
+        val inflate: (parent:ViewGroup)->B,
+        val bindView: (controls:B, binder: Binder, view: View, item:T)->Unit
+    ) : Base<T, ViewBindingAdapter.SimpleViewHolder<B>>(owner,list) {
+        class SimpleViewHolder<VB:androidx.viewbinding.ViewBinding>(val controls: VB): RecyclerView.ViewHolder(controls.root) {
+            val binder = Binder()
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleViewHolder<B> {
+            val controls = inflate(parent)
+            return SimpleViewHolder(controls)
+        }
 
-//    class SimpleWithDataBinding<T,B>(
-//        owner:LifecycleOwner,
-//        list: ObservableList<T>,
-//        val createView:(parent:ViewGroup, viewType:Int)->B,
-//        val bind: (binding: B, item:T)->Unit
-//    ) : Base<T, SimpleWithDataBinding.SimpleViewHolder<B>>(owner,list) where B:ViewDataBinding {
-//
-//        class SimpleViewHolder<B>(val binding: B): RecyclerView.ViewHolder(binding.root) where B:ViewDataBinding
-//
-//        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleViewHolder<B> {
-//            return SimpleViewHolder(createView(parent,viewType))
-//        }
-//
-//        override fun onBindViewHolder(holder: SimpleViewHolder<B>, position: Int) {
-//            bind(holder.binding, list[position])
-//        }
-//    }
+        override fun onBindViewHolder(holder: SimpleViewHolder<B>, position: Int) {
+            holder.binder.reset()
+            bindView(holder.controls, holder.binder, holder.itemView, list[position])
+        }
+    }
+
 }

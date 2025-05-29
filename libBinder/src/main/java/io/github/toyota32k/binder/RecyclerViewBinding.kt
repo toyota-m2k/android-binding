@@ -3,16 +3,25 @@
 package io.github.toyota32k.binder
 
 import android.view.View
+import android.view.ViewGroup
+import androidx.annotation.LayoutRes
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.asLiveData
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.BaseTransientBottomBar.*
 import com.google.android.material.snackbar.Snackbar
 import io.github.toyota32k.binder.list.ObservableList
 import io.github.toyota32k.binder.list.RecyclerViewAdapter
+import io.github.toyota32k.utils.ConstantLiveData
+import io.github.toyota32k.utils.Disposer
 import io.github.toyota32k.utils.IDisposable
+import io.github.toyota32k.utils.disposableObserve
 import kotlinx.coroutines.flow.Flow
 
 class RecyclerViewBinding<T> private constructor(
@@ -162,10 +171,20 @@ class RecyclerViewBinding<T> private constructor(
             return RecyclerViewBinding(list,view).apply {
                 view.setHasFixedSize(fixedSize)
                 view.layoutManager = layoutManager
-                view.adapter = RecyclerViewAdapter.Simple(owner,list,itemViewLayoutId,bindView)
+                view.adapter = RecyclerViewAdapter.SimpleAdapter(owner,list,itemViewLayoutId,bindView)
             }
         }
-
+        fun <T,B:androidx.viewbinding.ViewBinding> create(owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>,
+                         fixedSize:Boolean = true,
+                         layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(view.context),
+                         inflate: (parent:ViewGroup)->B,
+                         bindView:(B, Binder, View, T)->Unit) : RecyclerViewBinding<T> {
+            return RecyclerViewBinding(list,view).apply {
+                view.setHasFixedSize(fixedSize)
+                view.layoutManager = layoutManager
+                view.adapter = RecyclerViewAdapter.ViewBindingAdapter<T,B>(owner,list,inflate,bindView)
+            }
+        }
         // RecyclerView で、layout_height = wrap_content を指定しても、ビューの高さがコンテントの増減に追従しないので、
         // stackoverflow の記事を参考に、adapter を差し替える荒業で乗り切ったつもりでいたが、単に、setHasFixedSize(true) にしていたから、サイズが変更しなかっただけだったことが判明。
         // setHasFixedSize(false)にすれば、RecyclerViewAdapter.Simple で期待通りに動作することを確認した。
@@ -180,10 +199,137 @@ class RecyclerViewBinding<T> private constructor(
 //                view.adapter = RecyclerViewAdapter.SimpleWithDataBinding<T,B>(owner,list,createView,bind)
 //            }
 //        }
+    }
+    abstract class BuilderBase<T>(val owner: LifecycleOwner, val view:RecyclerView) {
+        protected var mObservableList: ObservableList<T>? = null
+        protected var mReadOnlyListLiveData: LiveData<Collection<T>>? = null
+        protected var mFixedSize:Boolean = true
+        protected var mLayoutManager: RecyclerView.LayoutManager? = null// = LinearLayoutManager(view.context),
+        protected var mDragAndDrop: Boolean = false
+        protected var mDragAndDropLiveData: LiveData<Boolean>? = null
+        protected var mGestureParams: GestureParams<T>? = null
+        protected var mGestureParamsLiveData: LiveData<GestureParams<T>?>? = null
+        fun list(l:ObservableList<T>) = apply { mObservableList = l }
+        fun list(l:LiveData<Collection<T>>) = apply { mReadOnlyListLiveData = l }
+        fun list(l:Flow<Collection<T>>) = apply { mReadOnlyListLiveData = l.asLiveData() }
+        fun list(l:Collection<T>) = apply { mReadOnlyListLiveData = ConstantLiveData(l) }
+        fun fixedSize(f:Boolean) = apply { mFixedSize = f }
+        fun layoutManager(l:RecyclerView.LayoutManager) = apply { mLayoutManager = l }
+        fun dragAndDrop(d:Boolean) = apply { mDragAndDrop = d }
+        fun dragAndDrop(d:LiveData<Boolean>) = apply { mDragAndDropLiveData = d }
+        fun dragAndDrop(d:Flow<Boolean>) = apply { mDragAndDropLiveData = d.asLiveData() }
+        fun gestureParams(p:GestureParams<T>) = apply { mGestureParams = p }
+        fun gestureParams(d:LiveData<GestureParams<T>?>) = apply { mGestureParamsLiveData = d }
+        fun gestureParams(d:Flow<GestureParams<T>?>) = apply { mGestureParamsLiveData = d.asLiveData() }
 
+        protected fun createExtensions(binder:Binder, bindings:RecyclerViewBinding<T>) {
+            val gestureParams = mGestureParams
+            val gestureParamsLiveData = mGestureParamsLiveData
+            val dragAndDropLiveData = mDragAndDropLiveData
+            if(gestureParamsLiveData!=null) {
+                binder.headlessBinding(owner, gestureParamsLiveData) { bindings.enableGesture(it) }
+            } else if(gestureParams!=null) {
+                bindings.enableGesture(gestureParams)
+            } else if(dragAndDropLiveData!=null) {
+                binder.headlessBinding(owner, dragAndDropLiveData) { bindings.enableDragAndDrop(it==true) }
+            } else if(mDragAndDrop) {
+                bindings.enableDragAndDrop(true)
+            }
+        }
 
+        abstract fun build(binder:Binder)
+    }
+    class SimpleBuilder<T>(owner: LifecycleOwner, view:RecyclerView):BuilderBase<T>(owner,view) {
+        protected var mItemLayoutId:Int = -1
+        protected var mBindView:((Binder, View, T)->Unit)? = null
+
+        fun itemLayoutId(@LayoutRes id:Int) = apply { mItemLayoutId = id }
+        fun bindView(b:(Binder, View, T)->Unit) = apply { mBindView = b }
+
+        override fun build(binder:Binder) {
+            val observableList = mObservableList
+            val readonlyList = mReadOnlyListLiveData
+            val bindView = mBindView ?: throw IllegalStateException("bindView is not set.")
+            binder + if(observableList!=null) {
+                RecyclerViewBinding.create(
+                    owner,
+                    view,
+                    observableList,
+                    mItemLayoutId,
+                    mFixedSize,
+                    mLayoutManager ?: LinearLayoutManager(view.context),
+                    bindView
+                ).apply {
+                    createExtensions(binder, this)
+                }
+            } else if(readonlyList!=null) {
+                RecyclerViewReadOnlyBinding.create(
+                    owner,
+                    view,
+                    readonlyList,
+                    mItemLayoutId,
+                    bindView
+                )
+            } else {
+                throw IllegalStateException("list is not set.")
+            }
+        }
+    }
+    class ViewBindingBuilder<T,B:ViewBinding>(owner: LifecycleOwner, view:RecyclerView): BuilderBase<T>(owner,view) {
+        var mBindView:((B, Binder, View, T)->Unit)? = null
+        var mInflate:((parent:ViewGroup)->B)? = null
+        fun bindView(b:(B, Binder, View, T)->Unit) = apply { mBindView = b }
+        fun inflate(inflate:(parent:ViewGroup)->B) = apply { mInflate = inflate }
+
+        override fun build(binder:Binder) {
+            val observableList = mObservableList
+            val readonlyList = mReadOnlyListLiveData
+            val inflate = mInflate ?: throw IllegalStateException("inflate is not set.")
+            val bindView = mBindView ?: throw IllegalStateException("bindView is not set.")
+            if(observableList!=null) {
+                RecyclerViewBinding.create(
+                    owner,
+                    view,
+                    observableList,
+                    mFixedSize,
+                    mLayoutManager ?: LinearLayoutManager(view.context),
+                    inflate,
+                    bindView
+                ).apply {
+                    createExtensions(binder, this)
+                }
+            } else if(readonlyList!=null) {
+                RecyclerViewReadOnlyBinding.create(
+                    owner,
+                    view,
+                    readonlyList,
+                    inflate,
+                    bindView
+                )
+            } else {
+                throw IllegalStateException("list is not set.")
+            }
+        }
     }
 }
+
+fun <T> Binder.recyclerViewBinding(owner:LifecycleOwner, view:RecyclerView, fn:RecyclerViewBinding.SimpleBuilder<T>.()->Unit) : Binder =
+    apply {
+        val builder = RecyclerViewBinding.SimpleBuilder<T>(owner,view)
+        builder.fn()
+        builder.build(this)
+    }
+fun <T> Binder.recyclerViewBinding(view:RecyclerView, fn:RecyclerViewBinding.SimpleBuilder<T>.()->Unit) : Binder =
+    recyclerViewBinding(requireOwner, view, fn)
+
+fun <T, B:ViewBinding> Binder.recyclerViewBindingEx(owner:LifecycleOwner, view:RecyclerView, fn:RecyclerViewBinding.ViewBindingBuilder<T,B>.()->Unit) : Binder =
+    apply {
+        val builder = RecyclerViewBinding.ViewBindingBuilder<T,B>(owner,view)
+        builder.fn()
+        builder.build(this)
+    }
+fun <T, B:ViewBinding> Binder.recyclerViewBindingEx(view:RecyclerView, fn:RecyclerViewBinding.ViewBindingBuilder<T,B>.()->Unit) : Binder =
+    recyclerViewBindingEx(requireOwner, view, fn)
 
 // region Owner 引数ありコーナー
 

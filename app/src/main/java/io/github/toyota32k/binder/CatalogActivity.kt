@@ -13,9 +13,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
+import io.github.toyota32k.binder.CatalogActivity.CatalogViewModel.ListItem
 import io.github.toyota32k.binder.command.LiteUnitCommand
 import io.github.toyota32k.binder.command.bindCommand
 import io.github.toyota32k.binder.databinding.ActivityCatalogBinding
+import io.github.toyota32k.binder.databinding.ListItemBinding
 import io.github.toyota32k.binder.list.ObservableList
 import io.github.toyota32k.utils.ActivityOrientation
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -179,12 +181,24 @@ class CatalogActivity : AppCompatActivity() {
             .multiEnableBinding(arrayOf(controls.sampleButton, controls.sampleEditText), viewModel.isEnabled)
             .fadeInOutBinding(controls.sampleContainer, viewModel.visibleWithFadeEffect)
             // RecyclerView binding
-            .recyclerViewGestureBinding(controls.recyclerView, viewModel.list, R.layout.list_item,
-                gestureParams = RecyclerViewBinding.GestureParams(dragToMove = true, swipeToDelete = true)) { _, view, item->
-                    // この例は固定値なので binder は使わない
-                    view.findViewById<TextView>(R.id.title).text = item.title
-                    view.findViewById<TextView>(R.id.sub_title).text = item.time.toString()
+//            .recyclerViewGestureBinding(controls.recyclerView, viewModel.list, R.layout.list_item,
+//                gestureParams = RecyclerViewBinding.GestureParams(dragToMove = true, swipeToDelete = true)) { _, view, item->
+//                    // この例は固定値なので binder は使わない
+//                    view.findViewById<TextView>(R.id.title).text = item.title
+//                    view.findViewById<TextView>(R.id.sub_title).text = item.time.toString()
+//                }
+            .recyclerViewBindingEx<ListItem, ListItemBinding>(controls.recyclerView) {
+                list(viewModel.list)
+                gestureParams(RecyclerViewBinding.GestureParams(dragToMove = true, swipeToDelete = true))
+                inflate { parent->
+                    ListItemBinding.inflate(layoutInflater, parent, false)
                 }
+                bindView { controls, binder, _, item, ->
+                    // この例は固定値なので binder は使わない
+                    controls.title.text = item.title
+                    controls.subTitle.text = item.time.toString()
+                }
+            }
             .exposedDropdownMenuBinding(controls.filledExposedDropdown, viewModel.colorSelection, CatalogViewModel.ColorList.entries)
             .bindCommand(viewModel.addCommand, controls.addListItemButton)
             // Activity binding

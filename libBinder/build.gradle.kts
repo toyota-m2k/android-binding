@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.lifecycleService)
 
     implementation(libs.android.utilities)
+    implementation(libs.androidx.viewbinding)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxJunit)
