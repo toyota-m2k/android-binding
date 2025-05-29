@@ -11,73 +11,82 @@ import androidx.recyclerview.widget.RecyclerView
 import io.github.toyota32k.binder.Binder
 import io.github.toyota32k.utils.IDisposable
 
-class RecyclerViewAdapter {
-    /**
-     * ObservableList を使った RecyclerView.Adapter のベースクラス
-     */
-    abstract class Base<T, VH>(
+interface IRecyclerViewInsertEventSource {
+    var insertedEventListener:((position:Int, range:Int, isLast:Boolean)->Unit)?
+}
+
+/**
+ * ObservableList を使った RecyclerView.Adapter のベースクラス
+ * 実装クラス：
+ *  - RecyclerViewAdapter.SimpleAdapter   item の layoutId を指定して、アイテムビューを生成するタイプ
+ *  - RecyclerViewAdapter.ViewBindingAdapter   ViewBinding を利用して、アイテムビューを生成するタイプ
+ */
+abstract class RecyclerViewAdapter<T, VH>(
         owner: LifecycleOwner,
         val list: ObservableList<T>
-    ) : IDisposable, RecyclerView.Adapter<VH>() where VH : RecyclerView.ViewHolder {
-
-//            set(v) {
-//                field = v
-//                v.mutationEvent.add(owner, this::onListChanged)
-//                notifyDataSetChanged()
-//            }
-
-        /**
-         * 単に、this::onListChanged を渡したいだけなのだが、コンストラクタでこれをやると、
-         * >> Leaking 'this' in constructor of non-final class Base
-         * というワーニングが出るので、一枚ラッパをはさむ。
-         */
-        private inner class ListMutationListener {
-            fun onListChanged(t: ObservableList.MutationEventData<T>?) {
-                this@Base.onListChanged(t)
-            }
+    ) : IDisposable, IRecyclerViewInsertEventSource, RecyclerView.Adapter<VH>() where VH : RecyclerView.ViewHolder {
+    /**
+     * 単に、this::onListChanged を渡したいだけなのだが、コンストラクタでこれをやると、
+     * >> Leaking 'this' in constructor of non-final class Base
+     * というワーニングが出るので、一枚ラッパをはさむ。
+     */
+    private inner class ListMutationListener {
+        fun onListChanged(t: ObservableList.MutationEventData<T>?) {
+            this@RecyclerViewAdapter.onListChanged(t)
         }
-        private val listMutationListener = ListMutationListener()
-        private var listenerKey: IDisposable? = list.addListener(owner, listMutationListener::onListChanged)
-
-        // region Disposable i/f
-        @MainThread
-        override fun dispose() {
-            listenerKey?.let {
-                listenerKey = null
-                it.dispose()
-            }
-        }
-
-        // endregion
-
-        // Observer i/f
-
-        @SuppressLint("NotifyDataSetChanged")
-        protected open fun onListChanged(t: ObservableList.MutationEventData<T>?) {
-            if (t == null) return
-            when (t) {
-                is ObservableList.ChangedEventData -> notifyItemRangeChanged(t.position, t.range)
-                is ObservableList.MoveEventData -> notifyItemMoved(t.from, t.to)
-                is ObservableList.RemoveEventData -> notifyItemRangeRemoved(t.position, t.range)
-                is ObservableList.InsertEventData -> notifyItemRangeInserted(t.position, t.range)
-                else -> notifyDataSetChanged()
-            }
-        }
-
-        // endregion
-
-        // region RecyclerView.Adapter
-
-        override fun getItemCount(): Int {
-            return list.size
-        }
-
-        abstract override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH
-
-        abstract override fun onBindViewHolder(holder: VH, position: Int)
-
-        // endregion
     }
+    private val listMutationListener = ListMutationListener()
+    private var listenerKey: IDisposable? = list.addListener(owner, listMutationListener::onListChanged)
+
+    // region IRecyclerViewInsertEventSource
+
+    override var insertedEventListener:((position:Int, range:Int, isLast:Boolean)->Unit)? = null
+
+    // endregion
+
+    // region Disposable i/f
+    @MainThread
+    override fun dispose() {
+        listenerKey?.let {
+            listenerKey = null
+            it.dispose()
+        }
+    }
+
+    // endregion
+
+    // region Observer i/f
+
+    @SuppressLint("NotifyDataSetChanged")
+    protected open fun onListChanged(t: ObservableList.MutationEventData<T>?) {
+        if (t == null) return
+        when (t) {
+            is ObservableList.ChangedEventData -> notifyItemRangeChanged(t.position, t.range)
+            is ObservableList.MoveEventData -> notifyItemMoved(t.from, t.to)
+            is ObservableList.RemoveEventData -> notifyItemRangeRemoved(t.position, t.range)
+            is ObservableList.InsertEventData -> {
+                notifyItemRangeInserted(t.position, t.range)
+                insertedEventListener?.invoke(t.position, t.range, t.position + t.range == list.size)
+            }
+            else -> notifyDataSetChanged()
+        }
+    }
+
+    // endregion
+
+    // region RecyclerView.Adapter
+
+    override fun getItemCount(): Int {
+        return list.size
+    }
+
+    abstract override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH
+
+    abstract override fun onBindViewHolder(holder: VH, position: Int)
+
+    // endregion
+
+    // region Implementation
 
     /**
      * ViewのレイアウトIDを渡しておけば自動的にビューが生成される最もシンプルなアダプター実装クラス
@@ -87,7 +96,7 @@ class RecyclerViewAdapter {
         list: ObservableList<T>,
         @LayoutRes private val itemViewLayoutId:Int,
         val bindView: (binder: Binder, view: View, item:T)->Unit
-    ) : Base<T, SimpleAdapter.SimpleViewHolder>(owner,list) {
+    ) : RecyclerViewAdapter<T, SimpleAdapter.SimpleViewHolder>(owner,list) {
         class SimpleViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
             val binder = Binder()
         }
@@ -111,7 +120,7 @@ class RecyclerViewAdapter {
         list: ObservableList<T>,
         val inflate: (parent:ViewGroup)->B,
         val bindView: (controls:B, binder: Binder, view: View, item:T)->Unit
-    ) : Base<T, ViewBindingAdapter.SimpleViewHolder<B>>(owner,list) {
+    ) : RecyclerViewAdapter<T, ViewBindingAdapter.SimpleViewHolder<B>>(owner,list) {
         class SimpleViewHolder<VB:androidx.viewbinding.ViewBinding>(val controls: VB): RecyclerView.ViewHolder(controls.root) {
             val binder = Binder()
         }
@@ -126,4 +135,5 @@ class RecyclerViewAdapter {
         }
     }
 
+    // endregion
 }

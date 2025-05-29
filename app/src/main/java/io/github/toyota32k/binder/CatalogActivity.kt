@@ -190,6 +190,7 @@ class CatalogActivity : AppCompatActivity() {
             .recyclerViewBindingEx<ListItem, ListItemBinding>(controls.recyclerView) {
                 list(viewModel.list)
                 gestureParams(RecyclerViewBinding.GestureParams(dragToMove = true, swipeToDelete = true))
+                autoScroll(RecyclerViewBinding.AutoScrollMode.ALL)
                 inflate { parent->
                     ListItemBinding.inflate(layoutInflater, parent, false)
                 }

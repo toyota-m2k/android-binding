@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.BaseTransientBottomBar.*
 import com.google.android.material.snackbar.Snackbar
+import io.github.toyota32k.binder.list.IRecyclerViewInsertEventSource
 import io.github.toyota32k.binder.list.ObservableList
 import io.github.toyota32k.binder.list.RecyclerViewAdapter
 import io.github.toyota32k.utils.ConstantLiveData
@@ -159,6 +160,31 @@ class RecyclerViewBinding<T> private constructor(
         }
     }
 
+    /**
+     * 自動スクロールのモード
+     */
+    enum class AutoScrollMode {
+        NONE,       // 自動スクロールしない
+        ALL,        // アイテムが挿入されたら常にスクロール
+        ONLY_TAIL,  // リストの末尾に挿入された場合にのみスクロールする
+    }
+
+    /**
+     * アイテムが挿入されたときに、そのアイテムが画面内に表示されるようにスクロールするかどうかの指定
+     */
+    fun enableAutoScroll(mode:AutoScrollMode) {
+        val src = view.adapter as? IRecyclerViewInsertEventSource ?: return
+        if (mode!= AutoScrollMode.NONE) {
+            src.insertedEventListener = { position, range, isLast ->
+                if (mode== AutoScrollMode.ALL||isLast) {
+                    view.smoothScrollToPosition(position + range - 1)
+                }
+            }
+        } else {
+            src.insertedEventListener = null
+        }
+    }
+
 //    override fun isDisposed(): Boolean {
 //        return (view.adapter as? IDisposable)?.isDisposed() ?: false
 //    }
@@ -209,6 +235,7 @@ class RecyclerViewBinding<T> private constructor(
         protected var mDragAndDropLiveData: LiveData<Boolean>? = null
         protected var mGestureParams: GestureParams<T>? = null
         protected var mGestureParamsLiveData: LiveData<GestureParams<T>?>? = null
+        protected var mAutoScroll: AutoScrollMode = AutoScrollMode.NONE
         fun list(l:ObservableList<T>) = apply { mObservableList = l }
         fun list(l:LiveData<Collection<T>>) = apply { mReadOnlyListLiveData = l }
         fun list(l:Flow<Collection<T>>) = apply { mReadOnlyListLiveData = l.asLiveData() }
@@ -221,6 +248,7 @@ class RecyclerViewBinding<T> private constructor(
         fun gestureParams(p:GestureParams<T>) = apply { mGestureParams = p }
         fun gestureParams(d:LiveData<GestureParams<T>?>) = apply { mGestureParamsLiveData = d }
         fun gestureParams(d:Flow<GestureParams<T>?>) = apply { mGestureParamsLiveData = d.asLiveData() }
+        fun autoScroll(mode: AutoScrollMode) = apply { mAutoScroll = mode }
 
         protected fun createExtensions(binder:Binder, bindings:RecyclerViewBinding<T>) {
             val gestureParams = mGestureParams
@@ -235,6 +263,7 @@ class RecyclerViewBinding<T> private constructor(
             } else if(mDragAndDrop) {
                 bindings.enableDragAndDrop(true)
             }
+            bindings.enableAutoScroll(mAutoScroll)
         }
 
         abstract fun build(binder:Binder)
