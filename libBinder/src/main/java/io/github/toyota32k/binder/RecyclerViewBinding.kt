@@ -2,6 +2,7 @@
 
 package io.github.toyota32k.binder
 
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
@@ -235,6 +236,8 @@ class RecyclerViewBinding<T> private constructor(
         protected var mGestureParams: GestureParams<T>? = null
         protected var mGestureParamsLiveData: LiveData<GestureParams<T>?>? = null
         protected var mAutoScroll: AutoScrollMode = AutoScrollMode.NONE
+        protected var mAutoScrollLiveData: LiveData<AutoScrollMode>? = null
+
         fun list(l:ObservableList<T>) = apply { mObservableList = l }
         fun list(l:LiveData<Collection<T>>) = apply { mReadOnlyListLiveData = l }
         fun list(l:Flow<Collection<T>>) = apply { mReadOnlyListLiveData = l.asLiveData() }
@@ -248,6 +251,8 @@ class RecyclerViewBinding<T> private constructor(
         fun gestureParams(d:LiveData<GestureParams<T>?>) = apply { mGestureParamsLiveData = d }
         fun gestureParams(d:Flow<GestureParams<T>?>) = apply { mGestureParamsLiveData = d.asLiveData() }
         fun autoScroll(mode: AutoScrollMode) = apply { mAutoScroll = mode }
+        fun autoScroll(d:LiveData<AutoScrollMode>) = apply { mAutoScrollLiveData = d }
+        fun autoScroll(d:Flow<AutoScrollMode>) = apply { mAutoScrollLiveData = d.asLiveData() }
 
         protected fun applyExtensions(bindings:RecyclerViewBinding<T>) {
             val gestureParams = mGestureParams
@@ -273,6 +278,45 @@ class RecyclerViewBinding<T> private constructor(
 
         fun itemLayoutId(@LayoutRes id:Int) = apply { mItemLayoutId = id }
         fun bindView(b:(Binder, View, T)->Unit) = apply { mBindView = b }
+
+        fun options(
+            @LayoutRes itemLayoutId:Int,
+            bindView:(Binder, View, T)->Unit,
+            list:ObservableList<T>? = null,
+            readOnlyListLiveData:LiveData<Collection<T>>? = null,
+            readOnlyListFlow:Flow<Collection<T>>? = null,
+            readOnlyList:Collection<T>? = null,
+            fixedSize:Boolean = true,
+            layoutManager: RecyclerView.LayoutManager? = null,
+            dragAndDrop:Boolean = false,
+            dragAndDropLiveData:LiveData<Boolean>? = null,
+            dragAndDropFlow:Flow<Boolean>? = null,
+            gestureParams:GestureParams<T>? = null,
+            gestureParamsLiveData:LiveData<GestureParams<T>?>? = null,
+            gestureParamsFlow:Flow<GestureParams<T>?>? = null,
+            autoScroll:AutoScrollMode = AutoScrollMode.NONE,
+            autoScrollLiveData:LiveData<AutoScrollMode>? = null,
+            autoScrollFlow:Flow<AutoScrollMode>? = null,
+        ) {
+            this.bindView(bindView)
+                .itemLayoutId(itemLayoutId)
+
+            if (list!=null) { list(list) }
+            if (readOnlyListLiveData!=null) { list(readOnlyListLiveData) }
+            if (readOnlyListFlow!=null) { list(readOnlyListFlow) }
+            if (readOnlyList!=null) { list(readOnlyList) }
+            fixedSize(fixedSize)
+            if (layoutManager!=null) { this.layoutManager(layoutManager) }
+            dragAndDrop(dragAndDrop)
+            if (dragAndDropLiveData!=null) { dragAndDrop(dragAndDropLiveData) }
+            if (dragAndDropFlow!=null) { dragAndDrop(dragAndDropFlow) }
+            if (gestureParams!=null) { gestureParams(gestureParams) }
+            if (gestureParamsLiveData!=null) { gestureParams(gestureParamsLiveData) }
+            if (gestureParamsFlow!=null) { gestureParams(gestureParamsFlow) }
+            autoScroll(autoScroll)
+            if (autoScrollLiveData!=null) { autoScroll(autoScrollLiveData) }
+            if (autoScrollFlow!=null) { autoScroll(autoScrollFlow) }
+        }
 
         override fun build(binder:Binder) {
             val observableList = mObservableList
@@ -308,15 +352,24 @@ class RecyclerViewBinding<T> private constructor(
         }
     }
     class ViewBindingBuilder<T,B:ViewBinding>(owner: LifecycleOwner, view:RecyclerView): BuilderBase<T>(owner,view) {
-        var mBindView:((B, Binder, View, T)->Unit)? = null
-        var mInflate:((parent:ViewGroup)->B)? = null
+        private data class InflaterInfo <B>(val actualInflater:LayoutInflater?=null, val viewBindingInflater:(inflater: LayoutInflater, parent:ViewGroup?, attachToParent:Boolean)->B) {
+            fun inflate(parent:ViewGroup):B {
+                return viewBindingInflater(actualInflater ?: LayoutInflater.from(parent.context), parent, false)
+            }
+        }
+        private var mBindView:((B, Binder, View, T)->Unit)? = null
+        private var mInflate:((parent:ViewGroup)->B)? = null
+        private var mInflaterInfo:InflaterInfo<B>? = null
+
         fun bindView(b:(B, Binder, View, T)->Unit) = apply { mBindView = b }
         fun inflate(inflate:(parent:ViewGroup)->B) = apply { mInflate = inflate }
+        fun inflater(viewBindingInflater:(inflater: LayoutInflater, parent:ViewGroup?, attachToParent:Boolean)->B, actualInflater:LayoutInflater?) = apply { mInflaterInfo = InflaterInfo(actualInflater, viewBindingInflater) }
 
         override fun build(binder:Binder) {
             val observableList = mObservableList
             val readonlyList = mReadOnlyListLiveData
-            val inflate = mInflate ?: throw IllegalStateException("inflate is not set.")
+
+            val inflate = mInflaterInfo?.run { ::inflate } ?: mInflate ?: throw IllegalStateException("inflater is not set.")
             val bindView = mBindView ?: throw IllegalStateException("bindView is not set.")
             if(observableList!=null) {
                 @Suppress("RemoveRedundantQualifierName")
@@ -342,6 +395,47 @@ class RecyclerViewBinding<T> private constructor(
             } else {
                 throw IllegalStateException("list is not set.")
             }
+        }
+        fun options(
+            bindView:(B, Binder, View, T)->Unit,
+            inflate: ((ViewGroup) -> B)? = null,
+            inflater: ((LayoutInflater, ViewGroup?, Boolean) -> B)? = null,
+            actualInflater: LayoutInflater? = null,
+            list:ObservableList<T>? = null,
+            readOnlyListLiveData:LiveData<Collection<T>>? = null,
+            readOnlyListFlow:Flow<Collection<T>>? = null,
+            readOnlyList:Collection<T>? = null,
+            fixedSize:Boolean = true,
+            layoutManager: RecyclerView.LayoutManager? = null,
+            dragAndDrop:Boolean = false,
+            dragAndDropLiveData:LiveData<Boolean>? = null,
+            dragAndDropFlow:Flow<Boolean>? = null,
+            gestureParams:GestureParams<T>? = null,
+            gestureParamsLiveData:LiveData<GestureParams<T>?>? = null,
+            gestureParamsFlow:Flow<GestureParams<T>?>? = null,
+            autoScroll:AutoScrollMode = AutoScrollMode.NONE,
+            autoScrollLiveData:LiveData<AutoScrollMode>? = null,
+            autoScrollFlow:Flow<AutoScrollMode>? = null,
+        ) {
+            this.bindView(bindView)
+
+            if (inflate!=null) { this.inflate(inflate) }
+            if (inflater!=null) { this.inflater(inflater, actualInflater) }
+            if (list!=null) { list(list) }
+            if (readOnlyListLiveData!=null) { list(readOnlyListLiveData) }
+            if (readOnlyListFlow!=null) { list(readOnlyListFlow) }
+            if (readOnlyList!=null) { list(readOnlyList) }
+            fixedSize(fixedSize)
+            if (layoutManager!=null) { this.layoutManager(layoutManager) }
+            dragAndDrop(dragAndDrop)
+            if (dragAndDropLiveData!=null) { dragAndDrop(dragAndDropLiveData) }
+            if (dragAndDropFlow!=null) { dragAndDrop(dragAndDropFlow) }
+            if (gestureParams!=null) { gestureParams(gestureParams) }
+            if (gestureParamsLiveData!=null) { gestureParams(gestureParamsLiveData) }
+            if (gestureParamsFlow!=null) { gestureParams(gestureParamsFlow) }
+            autoScroll(autoScroll)
+            if (autoScrollLiveData!=null) { autoScroll(autoScrollLiveData) }
+            if (autoScrollFlow!=null) { autoScroll(autoScrollFlow) }
         }
     }
 }

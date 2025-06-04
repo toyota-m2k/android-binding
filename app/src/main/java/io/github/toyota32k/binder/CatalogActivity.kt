@@ -188,6 +188,17 @@ class CatalogActivity : AppCompatActivity() {
 //                    view.findViewById<TextView>(R.id.sub_title).text = item.time.toString()
 //                }
             .recyclerViewBindingEx<ListItem, ListItemBinding>(controls.recyclerView) {
+                options(
+                    list = viewModel.list,
+                    inflater = ListItemBinding::inflate,
+                    bindView = { controls, binder, _, item, ->
+                        // この例は固定値なので binder は使わない
+                        controls.title.text = item.title
+                        controls.subTitle.text = item.time.toString()
+                    },
+                    autoScroll = RecyclerViewBinding.AutoScrollMode.ALL,
+                    gestureParams = RecyclerViewBinding.GestureParams(dragToMove = true, swipeToDelete = true)
+                )
                 list(viewModel.list)
                 gestureParams(RecyclerViewBinding.GestureParams(dragToMove = true, swipeToDelete = true))
                 autoScroll(RecyclerViewBinding.AutoScrollMode.ALL)
