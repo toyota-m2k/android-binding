@@ -4,7 +4,7 @@ package io.github.toyota32k.binder
 
 import androidx.lifecycle.LifecycleOwner
 import io.github.toyota32k.utils.IDisposable
-import io.github.toyota32k.utils.LifecycleDisposer
+import io.github.toyota32k.utils.lifecycle.LifecycleDisposer
 
 @Suppress("MemberVisibilityCanBePrivate")
 open class Binder : LifecycleDisposer() {

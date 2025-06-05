@@ -17,9 +17,9 @@ import com.google.android.material.snackbar.*
 import io.github.toyota32k.binder.list.IRecyclerViewInsertEventSource
 import io.github.toyota32k.binder.list.ObservableList
 import io.github.toyota32k.binder.list.RecyclerViewAdapter
-import io.github.toyota32k.utils.ConstantLiveData
 import io.github.toyota32k.utils.IDisposable
-import io.github.toyota32k.utils.disposableObserve
+import io.github.toyota32k.utils.lifecycle.ConstantLiveData
+import io.github.toyota32k.utils.lifecycle.disposableObserve
 import kotlinx.coroutines.flow.Flow
 
 class RecyclerViewBinding<T> private constructor(

@@ -3,7 +3,6 @@ package io.github.toyota32k.binder
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.IdRes
@@ -19,7 +18,7 @@ import io.github.toyota32k.binder.command.bindCommand
 import io.github.toyota32k.binder.databinding.ActivityCatalogBinding
 import io.github.toyota32k.binder.databinding.ListItemBinding
 import io.github.toyota32k.binder.list.ObservableList
-import io.github.toyota32k.utils.ActivityOrientation
+import io.github.toyota32k.utils.android.ActivityOrientation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.util.Date

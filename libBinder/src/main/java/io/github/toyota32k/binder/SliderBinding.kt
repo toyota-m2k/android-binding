@@ -5,7 +5,7 @@ package io.github.toyota32k.binder
 import android.annotation.SuppressLint
 import androidx.lifecycle.*
 import com.google.android.material.slider.Slider
-import io.github.toyota32k.utils.asMutableLiveData
+import io.github.toyota32k.utils.lifecycle.asMutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.lang.Float.max

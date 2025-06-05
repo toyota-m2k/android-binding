@@ -5,7 +5,7 @@ package io.github.toyota32k.binder
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import com.google.android.material.button.MaterialButtonToggleGroup
-import io.github.toyota32k.utils.asMutableLiveData
+import io.github.toyota32k.utils.lifecycle.asMutableLiveData
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**

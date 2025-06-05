@@ -4,11 +4,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import io.github.toyota32k.utils.ActivityOptions
-import io.github.toyota32k.utils.ActivityOrientation
-import io.github.toyota32k.utils.setOrientation
-import io.github.toyota32k.utils.showActionBar
-import io.github.toyota32k.utils.showStatusBar
+import io.github.toyota32k.utils.android.ActivityOptions
+import io.github.toyota32k.utils.android.ActivityOrientation
+import io.github.toyota32k.utils.android.setOrientation
+import io.github.toyota32k.utils.android.showActionBar
+import io.github.toyota32k.utils.android.showStatusBar
 import kotlinx.coroutines.flow.Flow
 
 /**

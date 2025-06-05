@@ -4,9 +4,9 @@ package io.github.toyota32k.binder
 
 import android.view.View
 import androidx.lifecycle.LifecycleOwner
-import io.github.toyota32k.utils.Callback
 import io.github.toyota32k.utils.IDisposable
-import io.github.toyota32k.utils.Listeners
+import io.github.toyota32k.utils.lifecycle.Callback
+import io.github.toyota32k.utils.lifecycle.Listeners
 
 /**
  * 通常（クリックイベントを直接扱いたい場合以外は）、Command系クラス(LiteCommandなど）を利用する。
@@ -53,7 +53,7 @@ class LongClickBinding<V>(
     }
 
     override fun onLongClick(v: View?): Boolean {
-        return callback?.invoke(view) ?: false
+        return callback?.invoke(view) == true
     }
     override fun dispose() {
         callback?.dispose()

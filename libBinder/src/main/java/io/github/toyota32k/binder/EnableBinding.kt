@@ -7,8 +7,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import io.github.toyota32k.utils.UtLog
-
-import io.github.toyota32k.utils.disposableObserve
+import io.github.toyota32k.utils.lifecycle.disposableObserve
 import kotlinx.coroutines.flow.Flow
 
 open class EnableBinding(

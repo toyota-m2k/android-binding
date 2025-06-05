@@ -2,12 +2,9 @@
 
 package io.github.toyota32k.binder.command
 
-import android.view.KeyEvent
-import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.widget.EditText
 import androidx.lifecycle.LifecycleOwner
-import io.github.toyota32k.utils.*
+import io.github.toyota32k.utils.IDisposable
+import io.github.toyota32k.utils.lifecycle.Listeners
 
 /**
  * invoke()から直接コールバックするライトウェイトコマンドクラス。

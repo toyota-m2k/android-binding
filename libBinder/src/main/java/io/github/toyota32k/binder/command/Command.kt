@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.annotation.MainThread
 import androidx.lifecycle.LifecycleOwner
 import io.github.toyota32k.utils.IDisposable
-import io.github.toyota32k.utils.Listeners
+import io.github.toyota32k.utils.lifecycle.Listeners
 import java.lang.ref.WeakReference
 
 /**

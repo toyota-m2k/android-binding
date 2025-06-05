@@ -7,7 +7,7 @@ import android.widget.AutoCompleteTextView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import io.github.toyota32k.utils.asMutableLiveData
+import io.github.toyota32k.utils.lifecycle.asMutableLiveData
 import kotlinx.coroutines.flow.MutableStateFlow
 
 interface ILabelResolverCreator<T> {

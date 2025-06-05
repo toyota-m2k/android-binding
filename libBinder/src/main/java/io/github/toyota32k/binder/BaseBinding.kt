@@ -5,7 +5,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import io.github.toyota32k.utils.IDisposable
-import io.github.toyota32k.utils.disposableObserve
+import io.github.toyota32k.utils.lifecycle.disposableObserve
 
 
 //abstract class DisposableImpl : IBinding {

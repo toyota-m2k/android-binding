@@ -9,7 +9,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import io.github.toyota32k.utils.IDisposable
-import io.github.toyota32k.utils.LifecycleOwnerHolder
+import io.github.toyota32k.utils.lifecycle.LifecycleOwnerHolder
 import kotlinx.coroutines.flow.Flow
 
 /**

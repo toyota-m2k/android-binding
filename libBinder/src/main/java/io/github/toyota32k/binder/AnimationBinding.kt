@@ -8,7 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.distinctUntilChanged
 import io.github.toyota32k.binder.anim.IReversibleAnimation
 import io.github.toyota32k.utils.UtLog
-import io.github.toyota32k.utils.disposableObserve
+import io.github.toyota32k.utils.lifecycle.disposableObserve
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

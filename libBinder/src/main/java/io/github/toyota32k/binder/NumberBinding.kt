@@ -5,8 +5,8 @@ package io.github.toyota32k.binder
 import android.widget.EditText
 import android.widget.TextView
 import androidx.lifecycle.*
-import io.github.toyota32k.utils.ConvertLiveData
-import io.github.toyota32k.utils.asMutableLiveData
+import io.github.toyota32k.utils.lifecycle.ConvertLiveData
+import io.github.toyota32k.utils.lifecycle.asMutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -68,10 +68,10 @@ class IntBinding(data: LiveData<Int>) : NumberBinding<Int>(data)
 class EditIntBinding(data: MutableLiveData<Int>, mode: BindingMode = BindingMode.TwoWay) : EditNumberBinding<Int>(data,mode,::stringToInt) {
     companion object {
         fun stringToInt(s: String?): Int {
-            try {
-                return s?.toInt() ?: 0
+            return try {
+                s?.toInt() ?: 0
             } catch (e: Exception) {
-                return 0
+                0
             }
         }
     }
