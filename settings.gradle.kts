@@ -14,6 +14,6 @@ dependencyResolutionManagement {
         maven { url = uri("https://jitpack.io") }
     }
 }
-rootProject.name = "AndroidBinder"
+rootProject.name = "android-binder"
 include(":app")
 include(":libBinder")

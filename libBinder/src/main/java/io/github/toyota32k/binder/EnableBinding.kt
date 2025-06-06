@@ -6,7 +6,6 @@ import android.view.View
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
-import io.github.toyota32k.utils.UtLog
 import io.github.toyota32k.utils.lifecycle.disposableObserve
 import kotlinx.coroutines.flow.Flow
 
@@ -54,11 +53,11 @@ class MultiEnableBinding(
     }
 
     override fun connect(owner: LifecycleOwner, view:View) {
-        UtLog.libLogger.assert( false,"use connectAll() method.")
+        logger.assert( false,"use connectAll() method.")
     }
 
     fun connectAll(owner:LifecycleOwner, vararg targets:View) {
-        UtLog.libLogger.assert(mode== BindingMode.OneWay, "MultiVisibilityBinding ... support OneWay mode only.")
+        logger.assert(mode== BindingMode.OneWay, "MultiVisibilityBinding ... support OneWay mode only.")
         if(observed==null) {
             observed = data.disposableObserve(owner, this::onDataChanged)
         }

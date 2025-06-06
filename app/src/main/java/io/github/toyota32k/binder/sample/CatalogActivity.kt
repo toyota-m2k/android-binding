@@ -1,4 +1,4 @@
-package io.github.toyota32k.binder
+package io.github.toyota32k.binder.sample
 
 import android.graphics.Color
 import android.os.Bundle
@@ -12,12 +12,33 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
-import io.github.toyota32k.binder.CatalogActivity.CatalogViewModel.ListItem
+import io.github.toyota32k.binder.Binder
+import io.github.toyota32k.binder.IIDValueResolver
+import io.github.toyota32k.binder.RecyclerViewBinding
+import io.github.toyota32k.binder.VisibilityBinding
+import io.github.toyota32k.binder.activityActionBarBinding
+import io.github.toyota32k.binder.activityOrientationBinding
+import io.github.toyota32k.binder.activityStatusBarBinding
+import io.github.toyota32k.binder.checkBinding
 import io.github.toyota32k.binder.command.LiteUnitCommand
 import io.github.toyota32k.binder.command.bindCommand
-import io.github.toyota32k.binder.databinding.ActivityCatalogBinding
-import io.github.toyota32k.binder.databinding.ListItemBinding
+import io.github.toyota32k.binder.editFloatBinding
+import io.github.toyota32k.binder.editTextBinding
+import io.github.toyota32k.binder.exposedDropdownMenuBinding
+import io.github.toyota32k.binder.fadeInOutBinding
 import io.github.toyota32k.binder.list.ObservableList
+import io.github.toyota32k.binder.materialRadioButtonGroupBinding
+import io.github.toyota32k.binder.materialRadioUnSelectableButtonGroupBinding
+import io.github.toyota32k.binder.materialToggleButtonGroupBinding
+import io.github.toyota32k.binder.multiEnableBinding
+import io.github.toyota32k.binder.observe
+import io.github.toyota32k.binder.radioGroupBinding
+import io.github.toyota32k.binder.recyclerViewBindingEx
+import io.github.toyota32k.binder.sample.databinding.ActivityCatalogBinding
+import io.github.toyota32k.binder.sample.databinding.ListItemBinding
+import io.github.toyota32k.binder.sliderBinding
+import io.github.toyota32k.binder.textBinding
+import io.github.toyota32k.binder.visibilityBinding
 import io.github.toyota32k.utils.android.ActivityOrientation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -107,7 +128,7 @@ class CatalogActivity : AppCompatActivity() {
 
             companion object {
                 fun valueOf(@IdRes id: Int): Orientation? {
-                    return Orientation.entries.find { it.id == id }
+                    return entries.find { it.id == id }
                 }
             }
 
@@ -186,7 +207,7 @@ class CatalogActivity : AppCompatActivity() {
 //                    view.findViewById<TextView>(R.id.title).text = item.title
 //                    view.findViewById<TextView>(R.id.sub_title).text = item.time.toString()
 //                }
-            .recyclerViewBindingEx<ListItem, ListItemBinding>(controls.recyclerView) {
+            .recyclerViewBindingEx<CatalogViewModel.ListItem, ListItemBinding>(controls.recyclerView) {
                 options(
                     list = viewModel.list,
                     inflater = ListItemBinding::inflate,

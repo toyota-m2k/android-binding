@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "io.github.toyota32k.binder"
+    namespace = "io.github.toyota32k.binder.sample"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.github.toyota32k.binder"
+        applicationId = "io.github.toyota32k.binder.sample"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -42,7 +42,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.constraintLayout)
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.android.utilities)
 
     implementation(project(":libBinder"))
     implementation(libs.androidx.activity)

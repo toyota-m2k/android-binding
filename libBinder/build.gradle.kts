@@ -52,9 +52,9 @@ dependencies {
     implementation(libs.lifecycleLivedataKtx)
     implementation(libs.lifecycleViewmodelKtx)
     implementation(libs.lifecycleService)
-
-    implementation(libs.android.utilities)
     implementation(libs.androidx.viewbinding)
+
+    api(libs.android.utilities)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxJunit)

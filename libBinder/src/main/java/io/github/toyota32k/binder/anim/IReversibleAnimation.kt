@@ -1,6 +1,7 @@
 package io.github.toyota32k.binder.anim
 
-import io.github.toyota32k.utils.UtLog
+import io.github.toyota32k.logger.UtLog
+import io.github.toyota32k.utils.UtLib
 import kotlinx.coroutines.delay
 
 /**
@@ -80,6 +81,6 @@ interface IReversibleAnimation {
     // endregion
 
     companion object {
-        val logger = UtLog("Anim", null, "io.github.toyota32k.")
+        val logger = UtLog("Anim", UtLib.logger, "io.github.toyota32k.")
     }
 }

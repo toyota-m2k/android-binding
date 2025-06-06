@@ -4,6 +4,7 @@ import android.view.View
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import io.github.toyota32k.logger.UtLog
 import io.github.toyota32k.utils.IDisposable
 import io.github.toyota32k.utils.lifecycle.disposableObserve
 
@@ -48,5 +49,9 @@ abstract class BaseBinding<T>(override val mode: BindingMode) : IBinding {
         view = null
         observed?.dispose()
         observed = null
+    }
+
+    companion object {
+        val logger = UtLog("Binding")
     }
 }
