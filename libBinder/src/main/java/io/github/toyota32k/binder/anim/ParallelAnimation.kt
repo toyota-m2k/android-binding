@@ -1,13 +1,12 @@
 package io.github.toyota32k.binder.anim
 
+import io.github.toyota32k.utils.reduce
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.lang.IllegalStateException
 import java.lang.Long.max
-import io.github.toyota32k.utils.reduce
 
 @Suppress("unused")
 class ParallelAnimation : IReversibleAnimation {
@@ -31,7 +30,7 @@ class ParallelAnimation : IReversibleAnimation {
     }
 
     override suspend fun run(reverse: Boolean): Boolean {
-        if(list.size==0) {
+        if(list.isEmpty()) {
             IReversibleAnimation.logger.error("no animation")
             throw IllegalStateException("no animation")
         }
