@@ -88,7 +88,7 @@ abstract class CommandBase<T> : ICommand<T> {
  * コールバックに引数を取らないコマンドクラスのi/f
  * ICommand<Unit> そのものなのだが、invoke(Unit) などと書かないといけないのは、かっちょ悪すぎるので。
  */
-interface IUnitCommand {
+interface IUnitCommand : IDisposable {
     @MainThread
     fun invoke()
 
@@ -111,10 +111,13 @@ interface IUnitCommand {
 open class UnitCommand(private val command:ICommand<Unit>) : IUnitCommand {
     override fun invoke()
         = command.invoke(Unit)
+
     override fun attachAndBind(owner: LifecycleOwner, view: View, fn: () -> Unit): IDisposable
         = command.attachAndBind(owner,view,Unit) { fn() }
+
     override fun attachView(view: View):IDisposable
         = command.attachView(view,Unit)
+
     override fun bind(owner: LifecycleOwner, fn: () -> Unit): IDisposable
         = command.bind(owner) { fn() }
 
@@ -123,6 +126,9 @@ open class UnitCommand(private val command:ICommand<Unit>) : IUnitCommand {
 
     override fun reset()
         = command.reset()
+
+    override fun dispose()
+        = command.dispose()
 }
 
 // region ICommand<T> binding

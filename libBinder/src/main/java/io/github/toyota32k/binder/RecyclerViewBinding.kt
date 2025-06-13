@@ -197,7 +197,7 @@ class RecyclerViewBinding<T> private constructor(
             return RecyclerViewBinding(list,view).apply {
                 view.setHasFixedSize(fixedSize)
                 view.layoutManager = layoutManager
-                view.adapter = RecyclerViewAdapter.SimpleAdapter(owner,list,itemViewLayoutId,bindView)
+                view.adapter = RecyclerViewAdapter.Simple(owner,list,itemViewLayoutId,bindView)
             }
         }
         fun <T,B: ViewBinding> create(owner: LifecycleOwner, view: RecyclerView, list: ObservableList<T>,
