@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "io.github.toyota32k.binder.sample"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.github.toyota32k.binder.sample"

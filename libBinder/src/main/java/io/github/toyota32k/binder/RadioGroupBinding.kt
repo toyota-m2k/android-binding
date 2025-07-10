@@ -75,7 +75,9 @@ open class RadioGroupBinding<T> (
         if(mode!= BindingMode.OneWay) {
             view.setOnCheckedChangeListener(this)
             if(mode== BindingMode.OneWayToSource||data.value==null) {
-                onCheckedChanged(radioGroup, radioGroup?.checkedRadioButtonId?:-1)
+                radioGroup?.apply {
+                    onCheckedChanged(this, checkedRadioButtonId)
+                }
             }
         }
     }
@@ -95,7 +97,7 @@ open class RadioGroupBinding<T> (
         }
     }
 
-    override fun onCheckedChanged(@Suppress("UNUSED_PARAMETER") group: RadioGroup?, @IdRes checkedId: Int) {
+    override fun onCheckedChanged(@Suppress("UNUSED_PARAMETER") group: RadioGroup, @IdRes checkedId: Int) {
         val v = idResolver.id2value(checkedId)
         mutableData?.apply {
             if (value != v) {

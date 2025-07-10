@@ -41,7 +41,7 @@ open class CheckBinding protected constructor(
 
     // region OnCheckedChangeListener
 
-    override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+    override fun onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean) {
         mutableData?.apply {
             if(value!=isChecked) {
                 value = isChecked
