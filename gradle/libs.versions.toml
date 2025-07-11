@@ -5,7 +5,7 @@ agp = "8.10.1"
 
 #libraries
 activity = "1.10.1"
-androidUtilities = "4.2.4"
+androidUtilities = "4.3.0"
 core = "1.6.1"
 coreKtx = "1.16.0"
 appcompat = "1.7.1"
@@ -26,7 +26,7 @@ mockitoInline = "5.2.0"
 recyclerview = "1.4.0"
 robolectric = "4.11.1"
 activityVersion = "1.10.1"
-viewbinding = "8.11.0"
+viewbinding = "8.11.1"
 
 [libraries]
 android-utilities = { module = "com.github.toyota-m2k:android-utilities", version.ref = "androidUtilities" }
