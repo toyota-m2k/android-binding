@@ -5,7 +5,7 @@ agp = "8.10.1"
 
 #libraries
 activity = "1.10.1"
-androidUtilities = "4.3.1"
+androidUtilities = "4.4.0"
 core = "1.6.1"
 coreKtx = "1.16.0"
 appcompat = "1.7.1"
