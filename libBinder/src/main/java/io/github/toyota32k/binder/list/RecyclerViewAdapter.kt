@@ -98,7 +98,7 @@ class RecyclerViewAdapter {
     class Simple<T>(
         owner:LifecycleOwner,
         list: ObservableList<T>,
-        @LayoutRes private val itemViewLayoutId:Int,
+        @param:LayoutRes private val itemViewLayoutId:Int,
         val bindView: (binder: Binder, view: View, item:T)->Unit
     ) : Base<T, Simple.SimpleViewHolder>(owner,list) {
         class SimpleViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {

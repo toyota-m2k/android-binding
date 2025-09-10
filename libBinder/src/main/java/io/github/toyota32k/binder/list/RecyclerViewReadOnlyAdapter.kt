@@ -16,7 +16,7 @@ import io.github.toyota32k.utils.IDisposable
 class RecyclerViewReadOnlyAdapter<T>(
     owner: LifecycleOwner,
     private val listSource: LiveData<Collection<T>>,
-    @LayoutRes private val itemViewLayoutId:Int,
+    @param:LayoutRes private val itemViewLayoutId:Int,
     private val bindView: (binder: Binder, view: View, item:T)->Unit
 ) : IDisposable, Observer<Collection<T>>, RecyclerView.Adapter<RecyclerViewReadOnlyAdapter.ViewHolder>() {
     var list:List<T> = emptyList()

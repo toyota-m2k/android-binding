@@ -11,7 +11,7 @@ import io.github.toyota32k.utils.IDisposable
 
 open class ListViewAdapter<T>(
     private val list: List<T>,
-    @LayoutRes private val  itemViewLayoutId: Int,
+    @param:LayoutRes private val  itemViewLayoutId: Int,
     private val bindView:(Binder, View, T)->Unit
 ) : BaseAdapter(), IDisposable {
 

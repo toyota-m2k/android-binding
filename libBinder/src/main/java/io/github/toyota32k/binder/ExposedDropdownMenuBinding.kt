@@ -40,7 +40,7 @@ open class ExposedDropdownMenuBinding<T>(
         super.connect(owner,view)
         fn?.invoke(this)
         view.isSaveEnabled = false  // restoreInstanceStateによる復元を無効化 ... こうしておかないと、回転すると adapter の設定が消えてしまう
-        adapter = ArrayAdapter<String>(view.context, com.google.android.material.R.layout.support_simple_spinner_dropdown_item, list.map(itemToLabel))
+        adapter = ArrayAdapter<String>(view.context, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, list.map(itemToLabel))
         view.setAdapter(adapter)
 
         if(mode!= BindingMode.OneWay) {
