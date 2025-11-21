@@ -1,19 +1,19 @@
 [versions]
 #plugins
-kotlin = "2.2.20"
-agp = "8.13.0"
+kotlin = "2.2.21"
+agp = "8.13.1"
 
 #libraries
-activity = "1.11.0"
+activity = "1.12.0"
 androidUtilities = "4.8.1"
 core = "1.7.0"
 coreKtx = "1.17.0"
 appcompat = "1.7.1"
 coreTesting = "2.2.0"
-lifecycleRuntimeKtx = "2.9.4"
-lifecycleLivedataKtx = "2.9.4"
-lifecycleViewmodelKtx = "2.9.4"
-lifecycleService = "2.9.4"
+lifecycleRuntimeKtx = "2.10.0"
+lifecycleLivedataKtx = "2.10.0"
+lifecycleViewmodelKtx = "2.10.0"
+lifecycleService = "2.10.0"
 material = "1.13.0"
 constraintLayout = "2.2.1"
 lifecycle = "2.2.0"
@@ -25,8 +25,8 @@ mockitoKotlin = "2.2.0"
 mockitoInline = "5.2.0"
 recyclerview = "1.4.0"
 robolectric = "4.16"
-activityVersion = "1.11.0"
-viewbinding = "8.13.0"
+activityVersion = "1.12.0"
+viewbinding = "8.13.1"
 
 [libraries]
 android-utilities = { module = "com.github.toyota-m2k:android-utilities", version.ref = "androidUtilities" }
