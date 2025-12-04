@@ -30,8 +30,26 @@ fun Binder.onLayoutChanged(view: View,
         return@create { view.removeOnLayoutChangeListener(callback) }
     })
 
-class DisposableGlobalLayoutListener(val view: View, val oneTime:Boolean, callback: ()->Unit) : IDisposable, ViewTreeObserver.OnGlobalLayoutListener {
-    private var mCallback: (() -> Unit)? = callback
+
+/**
+ * addOnGlobalLayoutListener / removeOnGlobalLayoutListener を IDisposable 化するクラス。
+ *
+ * @param view addOnGlobalLayoutListener / removeOnGlobalLayoutListener を適用するView
+ * @param callback addOnGlobalLayoutListenerで呼ばれるコールバック
+ */
+class DisposableGlobalLayoutListener(
+    val view: View,
+    callback: ()->Boolean) : IDisposable, ViewTreeObserver.OnGlobalLayoutListener {
+    /**
+     * @param oneTime true: 1回だけ実行するコールバックを登録 / false: dispose()するまでコールバックし続ける
+     * @param callback addOnGlobalLayoutListenerで呼ばれるコールバック
+     */
+    constructor(view:View, oneTime:Boolean, callback: ()->Unit) : this(view, {
+        callback()
+        !oneTime
+    })
+
+    private var mCallback: (() -> Boolean)? = callback
     init {
         view.viewTreeObserver.addOnGlobalLayoutListener(this)
     }
@@ -47,10 +65,9 @@ class DisposableGlobalLayoutListener(val view: View, val oneTime:Boolean, callba
     override fun onGlobalLayout() {
         val callback = mCallback
         if (callback!=null) {
-            if (oneTime) {
+            if (!callback()) {
                 dispose()
             }
-            callback()
         }
     }
 
@@ -73,10 +90,11 @@ class DisposableGlobalLayoutListener(val view: View, val oneTime:Boolean, callba
 
 /**
  * addOnGlobalLayoutListener / removeOnGlobalLayoutListener をBinderのスコープを使って自動化
+ * @param view addOnGlobalLayoutListener / removeOnGlobalLayoutListener を適用するView
+ * @param callback addOnGlobalLayoutListenerで呼ばれるコールバック。false を返すと、dispose()される。
  */
-fun Binder.onGlobalLayout(view: View, callback: ()->Unit)
-    = add(DisposableGlobalLayoutListener(view, oneTime=false, callback))
-
+fun Binder.onGlobalLayout(view: View, callback: ()->Boolean)
+        = add(DisposableGlobalLayoutListener(view, callback))
 /**
  * onGlobalLayoutの特殊形
  * onCreate()で初回のレイアウト更新を１回だけ取得したい場合に利用。
