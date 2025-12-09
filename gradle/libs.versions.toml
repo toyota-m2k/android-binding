@@ -4,8 +4,8 @@ kotlin = "2.2.21"
 agp = "8.13.1"
 
 #libraries
-activity = "1.12.0"
-androidUtilities = "4.9.0"
+activity = "1.12.1"
+androidUtilities = "4.9.1"
 core = "1.7.0"
 coreKtx = "1.17.0"
 appcompat = "1.7.1"
@@ -25,7 +25,7 @@ mockitoKotlin = "2.2.0"
 mockitoInline = "5.2.0"
 recyclerview = "1.4.0"
 robolectric = "4.16"
-activityVersion = "1.12.0"
+activityVersion = "1.12.1"
 viewbinding = "8.13.1"
 
 [libraries]
