@@ -8,13 +8,14 @@ import io.github.toyota32k.utils.IDisposable
 import io.github.toyota32k.utils.lifecycle.disposableObserve
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 abstract class BaseFlowBinding<T>(override val mode: BindingMode) : IBinding {
-    abstract val data : StateFlow<T>
+    abstract val data : Flow<T>
     open val mutableData : MutableStateFlow<T>?
         get() = data as MutableStateFlow<T>
 
@@ -27,7 +28,7 @@ abstract class BaseFlowBinding<T>(override val mode: BindingMode) : IBinding {
             val sc = owner.lifecycle.coroutineScope.apply { scope = this }
             data.onEach { onDataChanged(it) }.launchIn(sc)
             // data.value==null のときobserveのタイミングでonDataChanged()が呼ばれないような現象があったので明示的に呼び出しておく。
-            onDataChanged(data.value)
+//            onDataChanged(data.value)
         }
     }
 
