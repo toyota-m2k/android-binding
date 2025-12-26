@@ -62,10 +62,19 @@ class RecyclerViewBinding<T> private constructor(
         fun rollback()
     }
 
+    interface IDeletionHandler<T> {
+        fun canDelete(item:T):Boolean
+        fun delete(item:T):IDeletion
+    }
+    class SimpleDeletionHandler<T>(val deleteProc:(item:T)->IDeletion):IDeletionHandler<T> {
+        override fun canDelete(item:T):Boolean = true
+        override fun delete(item:T):IDeletion = deleteProc(item)
+    }
+
     data class GestureParams<T>(
         val dragToMove:Boolean,                 // D&D によるアイテムの移動をサポートするか？
         val swipeToDelete:Boolean,              // スワイプによるアイテム削除をサポートするか？
-        val deletionHandler:((T)-> IDeletion?)? = null
+        val deletionHandler:IDeletionHandler<T>? = null
     )
     fun enableGesture(params: GestureParams<T>?) {
         if(params==null) {
@@ -75,20 +84,19 @@ class RecyclerViewBinding<T> private constructor(
         }
         enableGesture(params.dragToMove, params.swipeToDelete, params.deletionHandler)
     }
-    fun enableGesture(dragToMove:Boolean, swipeToDelete:Boolean, deletionHandler:((T)-> IDeletion?)?) {
+    fun enableGesture(dragToMove:Boolean, swipeToDelete:Boolean, deletionHandler:IDeletionHandler<T>?) {
         itemTouchHelper?.attachToRecyclerView(null)
         itemTouchHelper = null
         if(dragToMove||swipeToDelete) {
             val dragDirs = if(dragToMove) ItemTouchHelper.UP or ItemTouchHelper.DOWN else 0
             val swipeDirs = if(swipeToDelete) ItemTouchHelper.RIGHT else 0
             itemTouchHelper = ItemTouchHelper(object:ItemTouchHelper.SimpleCallback(dragDirs, swipeDirs) {
-                var deletion: IDeletion? = null
                 override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
                     if(!swipeToDelete) return 0
                     val pos = viewHolder.bindingAdapterPosition
                     val item = list[pos]
-                    deletion = deletionHandler?.invoke(item)    // itemを削除する前（まだitemが存在するタイミングで）呼ぶので、リストの選択を変更するなら、このタイミングでやる。
-                    return if (deletion == null) return 0 else swipeDirs
+                    val canDelete =  deletionHandler?.canDelete(item)    // itemを削除する前（まだitemが存在するタイミングで）呼ぶので、リストの選択を変更するなら、このタイミングでやる。
+                    return if (canDelete!=true) return 0 else swipeDirs
                 }
                 override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
                     if(!dragToMove) return false
@@ -100,10 +108,9 @@ class RecyclerViewBinding<T> private constructor(
                 }
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                     if(!swipeToDelete) return
-                    val deletion = this.deletion ?: return
                     val pos = viewHolder.bindingAdapterPosition
                     val item = list[pos]
-//                    val deletion = deletionHandler?.invoke(item)    // itemを削除する前（まだitemが存在するタイミングで）呼ぶので、リストの選択を変更するなら、このタイミングでやる。
+                    val deletion = deletionHandler?.delete(item) ?: return    // itemを削除する前（まだitemが存在するタイミングで）呼ぶので、リストの選択を変更するなら、このタイミングでやる。
                     list.removeAt(pos)
                     if(deletion !is IPendingDeletion) {
                         // Undo無効 --> 即通知
