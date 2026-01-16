@@ -1,12 +1,12 @@
+import com.android.build.api.dsl.LibraryExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.android.library)
     id("maven-publish")
 }
 
-android {
+configure<LibraryExtension> {
     namespace = "io.github.toyota32k.binder"
     compileSdk = 36
 
@@ -34,12 +34,6 @@ android {
         singleVariant("release") {
             withSourcesJar()
         }
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
