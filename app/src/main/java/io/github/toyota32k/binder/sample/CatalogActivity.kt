@@ -49,7 +49,7 @@ class CatalogActivity : AppCompatActivity() {
         val inputText = MutableStateFlow("")
         val inputNumber = MutableStateFlow<Float>(0f)
 
-        enum class RadioSampleValue(@IdRes val id: Int, @IdRes val materialId: Int) {
+        enum class RadioSampleValue(@param:IdRes val id: Int, @param:IdRes val materialId: Int) {
             Radio1(R.id.radio1, R.id.mtRadio1),
             Radio2(R.id.radio2, R.id.mtRadio2),
             Radio3(R.id.radio3, R.id.mtRadio3);
@@ -77,7 +77,7 @@ class CatalogActivity : AppCompatActivity() {
 
         val radioSample = MutableStateFlow(RadioSampleValue.Radio1)
 
-        enum class ToggleSampleValue(@IdRes val id: Int) {
+        enum class ToggleSampleValue(@param:IdRes val id: Int) {
             Toggle1(R.id.toggle1),
             Toggle2(R.id.toggle2),
             Toggle3(R.id.toggle3);
@@ -121,7 +121,7 @@ class CatalogActivity : AppCompatActivity() {
         val showActionBar = MutableStateFlow(true)
         val showStatusBar = MutableStateFlow(true)
 
-        enum class Orientation(@IdRes val id: Int) {
+        enum class Orientation(@param:IdRes val id: Int) {
             Auto(View.NO_ID),
             Portrait(R.id.radio_portrait),
             Landscape(R.id.radio_landscape);
@@ -211,7 +211,7 @@ class CatalogActivity : AppCompatActivity() {
                 options(
                     list = viewModel.list,
                     inflater = ListItemBinding::inflate,
-                    bindView = { controls, binder, _, item, ->
+                    bindView = { controls, _, _, item, ->
                         // この例は固定値なので binder は使わない
                         controls.title.text = item.title
                         controls.subTitle.text = item.time.toString()
@@ -225,7 +225,7 @@ class CatalogActivity : AppCompatActivity() {
                 inflate { parent->
                     ListItemBinding.inflate(layoutInflater, parent, false)
                 }
-                bindView { controls, binder, _, item, ->
+                bindView { controls, _, _, item, ->
                     // この例は固定値なので binder は使わない
                     controls.title.text = item.title
                     controls.subTitle.text = item.time.toString()
