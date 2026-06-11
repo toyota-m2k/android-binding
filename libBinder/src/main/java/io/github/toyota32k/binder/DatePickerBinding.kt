@@ -37,6 +37,9 @@ data class DPDate(val intValue:Int) {
         return "$year / ${month+1} / $day"
     }
 
+    fun coerceIn(min: DPDate, max: DPDate): DPDate {
+        return DPDate(intValue.coerceIn(min.intValue, max.intValue))
+    }
 
     val isValid:Boolean
         get() = intValue>0 && intValue!=Int.MAX_VALUE

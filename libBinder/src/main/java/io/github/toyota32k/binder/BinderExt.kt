@@ -15,10 +15,10 @@ fun <T> Binder.observe(owner: LifecycleOwner, data: LiveData<T>, fn:(value:T)->U
 fun <T> Binder.observe(data:LiveData<T>,fn:(value:T)->Unit):Binder
         = observe(requireOwner, data, fn)
 
-fun <T> Binder.observe(owner:LifecycleOwner, data: Flow<T>, callback:(value:T)->Unit):Binder
+fun <T> Binder.observe(owner:LifecycleOwner, data: Flow<T>, callback:suspend (value:T)->Unit):Binder
     = add(data.disposableObserve(owner,callback))
 
-fun <T> Binder.observe(data:Flow<T>, callback:(value:T)->Unit):Binder
+fun <T> Binder.observe(data:Flow<T>, callback:suspend (value:T)->Unit):Binder
         = add(data.disposableObserve(requireOwner,callback))
 
 /**
