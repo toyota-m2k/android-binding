@@ -1,13 +1,13 @@
 [versions]
 #plugins
-kotlin = "2.3.21"
+kotlin = "2.4.0"
 agp = "9.2.1"
 
 #libraries
 activity = "1.13.0"
-androidUtilities = "4.15.0"
+androidUtilities = "4.16.0"
 core = "1.7.0"
-coreKtx = "1.18.0"
+coreKtx = "1.19.0"
 appcompat = "1.7.1"
 coreTesting = "2.2.0"
 lifecycleRuntimeKtx = "2.11.0"
