@@ -1,11 +1,12 @@
 [versions]
 #plugins
-kotlin = "2.4.0"
-agp = "9.2.1"
+#kotlin = "2.4.0"
+agp = "9.3.0"
 
 #libraries
 activity = "1.13.0"
-androidUtilities = "4.16.0"
+androidLogger = "2.2.2"
+androidUtilities = "4.16.2"
 core = "1.7.0"
 coreKtx = "1.19.0"
 appcompat = "1.7.1"
@@ -26,9 +27,10 @@ mockitoInline = "5.2.0"
 recyclerview = "1.4.0"
 robolectric = "4.16.1"
 activityVersion = "1.13.0"
-viewbinding = "9.2.1"
+viewbinding = "9.3.0"
 
 [libraries]
+android-logger = { module = "com.github.toyota-m2k:android-logger", version.ref = "androidLogger" }
 android-utilities = { module = "com.github.toyota-m2k:android-utilities", version.ref = "androidUtilities" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
 core = { module = "androidx.test:core", version.ref = "core" }
@@ -54,6 +56,6 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-viewbinding = { group = "androidx.databinding", name = "viewbinding", version.ref = "viewbinding" }
 
 [plugins]
-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+#jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }

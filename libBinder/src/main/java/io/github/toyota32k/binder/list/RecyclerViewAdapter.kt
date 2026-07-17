@@ -120,17 +120,17 @@ class RecyclerViewAdapter {
      * ViewBinding を利用するアダプター実装クラス
      */
     class ViewBindingAdapter<T,B:androidx.viewbinding.ViewBinding>(
-        owner:LifecycleOwner,
+        val owner:LifecycleOwner,
         list: ObservableList<T>,
         val inflate: (parent:ViewGroup)->B,
         val bindView: (controls:B, binder: Binder, view: View, item:T)->Unit
     ) : Base<T, ViewBindingAdapter.SimpleViewHolder<B>>(owner,list) {
-        class SimpleViewHolder<VB:androidx.viewbinding.ViewBinding>(val controls: VB): RecyclerView.ViewHolder(controls.root) {
-            val binder = Binder()
+        class SimpleViewHolder<VB:androidx.viewbinding.ViewBinding>(val controls: VB, owner: LifecycleOwner): RecyclerView.ViewHolder(controls.root) {
+            val binder = Binder().owner(owner)
         }
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleViewHolder<B> {
             val controls = inflate(parent)
-            return SimpleViewHolder(controls)
+            return SimpleViewHolder(controls, owner)
         }
 
         override fun onBindViewHolder(holder: SimpleViewHolder<B>, position: Int) {

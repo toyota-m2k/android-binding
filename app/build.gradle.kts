@@ -6,7 +6,10 @@ plugins {
 
 configure<ApplicationExtension> {
     namespace = "io.github.toyota32k.binder.sample"
-    compileSdk = 37
+    compileSdk {
+        version = release(37)
+        compileSdkMinor = 1
+    }
 
     defaultConfig {
         applicationId = "io.github.toyota32k.binder.sample"
@@ -45,7 +48,10 @@ dependencies {
     implementation(libs.constraintLayout)
     implementation(libs.androidx.activity.ktx)
 
+    implementation(libs.android.logger)
+    implementation(libs.android.utilities)
     implementation(project(":libBinder"))
+
     implementation(libs.androidx.activity)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidxJunit)
