@@ -29,17 +29,21 @@ import kotlin.time.Duration.Companion.milliseconds
  * @param handler タップイベントのハンドラ。falseを返すと、その時点で反復終了
  */
 class ClickRepeater (
-    val owner: LifecycleOwner,
     view:View?=null,
     private val activationTime:Duration = 300.milliseconds,
     private val repeatInterval: Duration = 100.milliseconds,
-    handler: (suspend (View)->Boolean)? = null
+    handler: ((EventType)->Unit)? = null
 ): IDisposable {
     private var view: View? by WeakReferenceDelegate()
-    private var callback: (suspend (View)->Boolean)? = handler
+    private var callback: ((EventType)->Unit)? = handler
 
-    private val logger = UtLog("ClickRepeater", UtLib.logger, UtClickRepeater::class.java)
-    private var chronos = Chronos(logger)
+//    private val logger = UtLog("ClickRepeater", UtLib.logger, UtClickRepeater::class.java)
+
+    enum class EventType(val on:Boolean) {
+        CLICKED(true),
+        REPEATING(true),
+        RELEASED(false),
+    }
 
     private var repeating:Boolean = false
     init {
@@ -50,23 +54,15 @@ class ClickRepeater (
 
     private var job: Job? = null
 
-    private suspend fun invokeCallback():Boolean {
-        val v = view ?: return false
-        return callback?.invoke(v) == true
-    }
-
     @MainThread
-    private fun start() {
+    fun run() {
         if(repeating) return
         repeating = true
 
-        job = owner.lifecycleScope.launch {
-            invokeCallback()
+        job = CoroutineScope(Dispatchers.Main).launch {
             delay(activationTime)
             while (isActive && repeating) {
-                if (!invokeCallback()) {
-                    break
-                }
+                callback?.invoke(EventType.REPEATING)
                 delay(repeatInterval)
             }
         }
@@ -80,7 +76,7 @@ class ClickRepeater (
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    fun attachView(view:View, handler: (suspend (View) -> Boolean)?=null) {
+    fun attachView(view:View, handler: ((EventType) -> Unit)?=null) {
         repeating = false
         this.view = view
         if (handler != null) {
@@ -89,13 +85,13 @@ class ClickRepeater (
         view.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
-                    chronos.lap("Touch - UP")
                     stop()
+                    callback?.invoke(EventType.RELEASED)
                 }
 
                 MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                    chronos.lap("Touch - DOWN")
-                    start()
+                    callback?.invoke(EventType.CLICKED)
+                    run()
                 }
                 else -> {}
             }
@@ -104,77 +100,86 @@ class ClickRepeater (
     }
 
     override fun dispose() {
-        callback = null
         view?.setOnTouchListener(null)
         view = null
         job?.cancel()
         job = null
+        callback = null
     }
 }
 
-/**
- * ビューを押し続けたときに、一定間隔でイベントを発行し続けるバインダークラス
- */
-class RepeatableClickBinder(
-    val repeater: ClickRepeater
-): IBinding {
+class RepeatableClickBinder<V>(
+    owner:LifecycleOwner,
+    view: V,
+    activationTime:Duration,
+    repeatInterval: Duration,
+    onClick:((V)->Unit),
+    onRelease:((V)->Unit)?,
+): IBinding where V:View {
+
     constructor(
         owner:LifecycleOwner,
-        view: View,
+        view: V,
         activationTime:Duration,
         repeatInterval: Duration,
-        onClick:suspend (View)->Boolean
-    ) : this(ClickRepeater(owner, view, activationTime, repeatInterval, onClick))
+        onClick:((V)->Unit)): this(owner, view, activationTime, repeatInterval, onClick, null)
 
     override val mode: BindingMode = BindingMode.OneWayToSource
+    private val callback = Callback<ClickRepeater.EventType,Unit>(owner) {
+        if (it.on) {
+            onClick(view)
+        } else {
+            onRelease?.invoke(view)
+        }
+    }
+    private val repeater = ClickRepeater(view,activationTime, repeatInterval, callback::invoke)
     override fun dispose() {
+        callback.dispose()
         repeater.dispose()
     }
 
-    class Builder(private val owner: LifecycleOwner, private val view: View,) {
+    class Builder<V>(
+        private val owner: LifecycleOwner,
+        private val view: V,
+    ) where V:View {
+
         private var mActivationTime:Duration = 500.milliseconds
         private var mRepeatInterval: Duration = 500.milliseconds
-        private lateinit var mOnClick:(suspend (View)->Boolean)
-        private var mOnRelease:((View)->Unit)? = null
+        private lateinit var mOnClick:((V)->Unit)
+        private var mOnRelease:((V)->Unit)? = null
 
-        fun activationTime(time:Duration): Builder = apply {
+        fun activationTime(time:Duration): Builder<V> = apply {
             mActivationTime = time
         }
-        fun repeatInterval(interval:Duration): Builder = apply {
+        fun repeatInterval(interval:Duration): Builder<V> = apply {
             mRepeatInterval = interval
         }
-        fun onClick(handler:(suspend (View)->Boolean)): Builder = apply {
-            mOnClick = { handler(view) }
+        fun onClick(handler:((V)->Unit)): Builder<V> = apply {
+            mOnClick = handler
         }
-        fun onRelease(handler:((View)->Unit)): Builder = apply {
+        fun onRelease(handler:((V)->Unit)): Builder<V> = apply {
             mOnRelease = handler
         }
-        fun build(): RepeatableClickBinder {
-            return RepeatableClickBinder (owner, view, mActivationTime, mRepeatInterval, mOnClick)
+        fun build(): RepeatableClickBinder<V> {
+            return RepeatableClickBinder<V>(owner, view, mActivationTime, mRepeatInterval, mOnClick, mOnRelease)
         }
     }
 }
 
-fun Binder.repeatableClickBinding(owner:LifecycleOwner, view:View, activationTime:Duration, repeatInterval: Duration, onClick:(suspend (View)->Boolean)): Binder
+fun Binder.repeatableClickBinding(owner:LifecycleOwner, view:View, activationTime:Duration, repeatInterval: Duration, onClick:((View)->Unit)): Binder
         = add(RepeatableClickBinder(owner, view, activationTime, repeatInterval, onClick))
 
-fun Binder.repeatableClickBinding(view:View, activationTime:Duration, repeatInterval: Duration, onClick:(suspend (View)->Boolean))
+fun Binder.repeatableClickBinding(view:View, activationTime:Duration, repeatInterval: Duration, onClick:((View)->Unit))
         = add(RepeatableClickBinder(requireOwner, view, activationTime, repeatInterval, onClick))
 
-fun Binder.repeatableClickBinding(owner:LifecycleOwner, view:View, customize:RepeatableClickBinder.Builder.()->Unit): Binder
+fun Binder.repeatableClickBinding(owner:LifecycleOwner, view:View, customize:RepeatableClickBinder.Builder<View>.()->Unit): Binder
         = add(RepeatableClickBinder.Builder(owner, view).apply { customize() }.build())
 
-fun Binder.repeatableClickBinding(view:View, customize:RepeatableClickBinder.Builder.()->Unit): Binder
+fun Binder.repeatableClickBinding(view:View, customize:RepeatableClickBinder.Builder<View>.()->Unit): Binder
         = add(RepeatableClickBinder.Builder(requireOwner, view).apply { customize() }.build())
 
 fun <T> Binder.bindRepeatableCommand(cmd: ICommand<T>, view:View, param:T, activationTime:Duration=500.milliseconds, repeatInterval: Duration=500.milliseconds): Binder
-        = repeatableClickBinding(view, activationTime, repeatInterval) {
-            cmd.invoke(param)
-            true
-        }
+        = repeatableClickBinding(view, activationTime, repeatInterval) { cmd.invoke(param) }
 
 fun <T> Binder.bindRepeatableCommand(owner:LifecycleOwner, cmd: ICommand<T>, view:View, param:T, activationTime:Duration=500.milliseconds, repeatInterval: Duration=500.milliseconds): Binder
-        = repeatableClickBinding(owner, view, activationTime, repeatInterval) {
-            cmd.invoke(param)
-            true
-        }
+        = repeatableClickBinding(owner, view, activationTime, repeatInterval) { cmd.invoke(param) }
