@@ -5,8 +5,8 @@ agp = "9.3.1"
 
 #libraries
 activity = "1.13.0"
-androidLogger = "2.2.3"
-androidUtilities = "4.16.3"
+androidLogger = "2.2.4"
+androidUtilities = "4.16.4"
 core = "1.7.0"
 coreKtx = "1.19.0"
 appcompat = "1.7.1"
@@ -16,7 +16,7 @@ lifecycleLivedataKtx = "2.11.0"
 lifecycleViewmodelKtx = "2.11.0"
 lifecycleService = "2.11.0"
 material = "1.14.0"
-constraintLayout = "2.2.1"
+constraintLayout = "2.2.2"
 lifecycle = "2.2.0"
 coroutinesTest = "1.11.0"
 junit = "4.13.2"
@@ -27,7 +27,7 @@ mockitoInline = "5.2.0"
 recyclerview = "1.4.0"
 robolectric = "4.16.1"
 activityVersion = "1.13.0"
-viewbinding = "9.3.0"
+viewbinding = "9.3.1"
 
 [libraries]
 android-logger = { module = "com.github.toyota-m2k:android-logger", version.ref = "androidLogger" }
