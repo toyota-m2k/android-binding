@@ -1,12 +1,12 @@
 [versions]
 #plugins
 #kotlin = "2.4.0"
-agp = "9.3.2"
+agp = "9.4.0"
 
 #libraries
 activity = "1.13.0"
-androidLogger = "2.3.2"
-androidUtilities = "4.17.1"
+androidLogger = "2.3.3"
+androidUtilities = "4.18.0"
 core = "1.7.0"
 coreKtx = "1.19.0"
 appcompat = "1.8.0"
@@ -25,9 +25,9 @@ espressoCore = "3.7.0"
 mockitoKotlin = "2.2.0"
 mockitoInline = "5.2.0"
 recyclerview = "1.4.0"
-robolectric = "4.16.1"
+robolectric = "4.17"
 activityVersion = "1.13.0"
-viewbinding = "9.3.2"
+viewbinding = "9.4.0"
 
 [libraries]
 android-logger = { module = "com.github.toyota-m2k:android-logger", version.ref = "androidLogger" }
