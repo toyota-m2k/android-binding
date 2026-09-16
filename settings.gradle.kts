@@ -15,5 +15,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "android-binder"
-include(":app")
 include(":libBinder")
+if (System.getenv("JITPACK") == null) {
+    include(":app")
+}
